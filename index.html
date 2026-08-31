@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Acceso SAP PM | Coca-Cola</title>
+<link rel="icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="shortcut icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="apple-touch-icon" href="Recources/LogoCocaCola.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red: #E4002B;
+  --red-dim: rgba(228,0,43,0.14);
+  --gold: #C9A24A;
+  --bg: #0E0E10;
+  --panel: #17171A;
+  --panel-2: #1C1C1F;
+  --line: rgba(255,255,255,0.08);
+  --text: #F2F1EE;
+  --text-dim: #8B8990;
+  --text-faint: #57555C;
+  --ok: #3D9D6B;
+  --font: 'Poppins', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Ambient glow background */
+body::before {
+  content: ""; position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 700px; height: 500px;
+  background: radial-gradient(ellipse at top, rgba(228,0,43,0.18) 0%, rgba(14,14,16,0) 70%);
+  z-index: 0; pointer-events: none;
+}
+body::after {
+  content: ""; position: fixed; bottom: 0; right: 0;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(201,162,74,0.06) 0%, transparent 70%);
+  z-index: 0; pointer-events: none;
+}
+
+/* === LOGIN CONTAINER === */
+.login-container {
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  z-index: 10;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  padding: 36px 30px 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(228,0,43,0.06);
+  animation: slideUp .35s cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === BRAND HEADER === */
+.login-brand {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.login-brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.login-brand img {
+  height: 42px;
+  filter: drop-shadow(0 4px 12px rgba(228,0,43,0.35));
+  object-fit: contain;
+}
+.login-brand-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px; height: 50px;
+  background: rgba(228,0,43,0.12);
+  border: 1px solid rgba(228,0,43,0.3);
+  border-radius: 14px;
+  font-size: 22px;
+}
+.login-brand h1 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+.login-brand p {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+/* === SECTION LABEL === */
+.section-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+
+/* === ROLE CARDS === */
+.role-option-card {
+  background: var(--panel-2);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 15px 16px;
+  cursor: pointer;
+  transition: border-color .18s, background .18s, box-shadow .18s, transform .12s;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.role-option-card:hover {
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.02);
+}
+.role-option-card:active { transform: scale(.99); }
+.role-option-card.selected {
+  border-color: var(--red);
+  background: rgba(228,0,43,0.07);
+  box-shadow: 0 4px 20px rgba(228,0,43,0.14);
+}
+
+.role-option-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.role-option-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+}
+.role-badge {
+  font-size: 9.5px;
+  font-family: var(--mono);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.role-option-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+/* === FORM INPUTS === */
+.input-group { margin-top: 8px; }
+.input-label {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  display: block;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.auth-input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+  font-family: var(--font);
+  transition: border-color .15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.auth-input:focus { border-color: var(--gold); }
+
+/* === SUBMIT BUTTON === */
+.btn-submit {
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s, transform .12s, box-shadow .18s;
+  font-family: var(--font);
+  margin-top: 14px;
+  box-shadow: 0 6px 20px rgba(228,0,43,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-submit:hover { background: #ff1e43; box-shadow: 0 8px 28px rgba(228,0,43,0.45); }
+.btn-submit:active { transform: scale(.98); }
+
+/* === FOOTER === */
+.login-foot {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  line-height: 1.5;
+}
+
+/* === ERROR SHAKE === */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,60% { transform: translateX(-6px); }
+  40%,80% { transform: translateX(6px); }
+}
+.shake { animation: shake .35s ease; }
+
+/* =========================================================
+   RESPONSIVE — MÓVIL (max-width: 520px)
+   ========================================================= */
+@media (max-width: 520px) {
+  body {
+    align-items: flex-start;
+    padding: 0;
+    background: var(--bg);
+    overflow-y: auto;
+  }
+  body::before { width: 100%; height: 260px; }
+
+  .login-container {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    padding: 24px 18px 24px;
+    box-shadow: none;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    animation: none;
+    width: 100%;
+  }
+
+  .login-brand h1 { font-size: 15.5px; }
+  .login-brand p  { font-size: 11px; }
+  .login-brand img { height: 36px; }
+
+  .role-option-title { font-size: 12.5px; }
+  .role-option-desc  { font-size: 10.5px; }
+
+  .auth-input { font-size: 16px; /* evitar auto-zoom en iOS Safari */ padding: 12px 12px; }
+
+  .btn-submit { font-size: 14px; padding: 14px; margin-top: 18px; }
+  .login-foot { font-size: 9.5px; margin-top: 20px; }
+}
+
+/* Pantallas muy pequeñas (≤ 360px) */
+@media (max-width: 360px) {
+  .login-container { padding: 18px 14px 18px; }
+  .role-option-title { font-size: 12px; }
+  .role-badge { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-container">
+
+  <!-- BRAND -->
+  <div class="login-brand">
+    <div class="login-brand-logo">
+      <img
+        src="Recources/LogoCocaCola.png"
+        alt="Coca-Cola Logo"
+        id="brandImg"
+        onerror="document.getElementById('brandImg').style.display='none'; document.getElementById('brandFallback').style.display='flex';"
+      />
+      <span class="login-brand-fallback" id="brandFallback" style="display:none;">🏭</span>
+    </div>
+    <h1>Plataforma de Avisos SAP PM</h1>
+    <p>Seleccione su rol de usuario para ingresar al sistema industrial</p>
+  </div>
+
+  <!-- SECTION LABEL -->
+  <div class="section-label">Tipo de acceso</div>
+
+  <!-- Opción 1: Master -->
+  <div class="role-option-card selected" id="optMasterCard">
+    <div class="role-option-top">
+      <div class="role-option-title">
+        🛡️ Usuario Master (<span style="font-family:var(--mono); color:var(--gold);">sv001437</span>)
+      </div>
+      <span class="role-badge" style="color:var(--gold); background:rgba(201,162,74,0.15); border:1px solid rgba(201,162,74,0.3);">ADMIN</span>
+    </div>
+    <div class="role-option-desc">Permisos de administración: Carga masiva Excel/SAP PM, actualización global y gestión de reportes.</div>
+    <div id="masterPassBox" class="input-group">
+      <label class="input-label" for="inputMasterPass">Contraseña de Administrador:</label>
+      <input
+        type="password"
+        class="auth-input"
+        id="inputMasterPass"
+        placeholder="Ingrese contraseña master"
+        autocomplete="current-password"
+        inputmode="text"
+      />
+    </div>
+  </div>
+
+  <!-- Opción 2: Operador -->
+  <div class="role-option-card" id="optOperatorCard">
+    <div class="role-option-top">
+      <div class="role-option-title">👤 Operador de Planta</div>
+      <span class="role-badge" style="color:var(--ok); background:rgba(61,157,107,0.15); border:1px solid rgba(61,157,107,0.3);">OPERADOR</span>
+    </div>
+    <div class="role-option-desc">Sin contraseña. Notificaciones filtradas con tus trabajos asignados por ID de Autor.</div>
+    <div id="operatorSelectBox" class="input-group" style="display:none;">
+      <label class="input-label" for="selectOperatorId">Seleccione su ID de Autor (Notificador):</label>
+      <select class="auth-input" id="selectOperatorId">
+        <option value="11136PAE">ID Autor: 11136PAE</option>
+        <option value="12000">ID Autor: 12000</option>
+        <option value="12000PAE">ID Autor: 12000PAE</option>
+        <option value="12324PAE">ID Autor: 12324PAE</option>
+        <option value="76001946">ID Autor: 76001946</option>
+        <option value="76001947">ID Autor: 76001947</option>
+        <option value="76001959">ID Autor: 76001959</option>
+        <option value="76002032">ID Autor: 76002032</option>
+        <option value="76002037">ID Autor: 76002037</option>
+        <option value="76002049">ID Autor: 76002049</option>
+        <option value="76002264">ID Autor: 76002264</option>
+        <option value="76011305">ID Autor: 76011305</option>
+        <option value="76012041">ID Autor: 76012041</option>
+        <option value="76012271">ID Autor: 76012271</option>
+        <option value="76012405">ID Autor: 76012405</option>
+        <option value="76012411">ID Autor: 76012411</option>
+        <option value="76012468">ID Autor: 76012468</option>
+        <option value="76012470">ID Autor: 76012470</option>
+        <option value="76015706">ID Autor: 76015706</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <button class="btn-submit" id="btnSubmitLogin">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    Ingresar a la Plataforma
+  </button>
+
+  <div class="login-foot">
+    Planta Industrial Coca-Cola &nbsp;·&nbsp; Sistema de Mantenimiento SAP PM
+  </div>
+
+</div>
+
+<script>
+const MASTER_ID   = 'sv001437';
+const MASTER_PASS = 'master123';
+let selectedRole  = 'MASTER';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const optMasterCard    = document.getElementById('optMasterCard');
+  const optOperatorCard  = document.getElementById('optOperatorCard');
+  const masterPassBox    = document.getElementById('masterPassBox');
+  const operatorSelectBox= document.getElementById('operatorSelectBox');
+  const btnSubmit        = document.getElementById('btnSubmitLogin');
+  const inputPass        = document.getElementById('inputMasterPass');
+
+  /* ── Selección de Rol ── */
+  optMasterCard.addEventListener('click', () => {
+    selectedRole = 'MASTER';
+    optMasterCard.classList.add('selected');
+    optOperatorCard.classList.remove('selected');
+    masterPassBox.style.display = 'block';
+    operatorSelectBox.style.display = 'none';
+    setTimeout(() => inputPass.focus(), 50);
+  });
+
+  optOperatorCard.addEventListener('click', () => {
+    selectedRole = 'OPERATOR';
+    optOperatorCard.classList.add('selected');
+    optMasterCard.classList.remove('selected');
+    masterPassBox.style.display = 'none';
+    operatorSelectBox.style.display = 'block';
+  });
+
+  /* ── Enter en contraseña dispara login ── */
+  inputPass.addEventListener('keydown', e => {
+    if (e.key === 'Enter') btnSubmit.click();
+  });
+
+  /* ── Login ── */
+  btnSubmit.addEventListener('click', () => {
+    if (selectedRole === 'MASTER') {
+      const pass = inputPass.value;
+      if (pass === MASTER_PASS || pass === MASTER_ID) {
+        localStorage.setItem('cocacola_active_user', JSON.stringify({
+          role: 'MASTER', id: MASTER_ID, name: 'Master: sv001437'
+        }));
+        window.location.href = 'dashboard-coca-cola.html';
+      } else {
+        // Feedback visual de error sin alert nativo
+        inputPass.style.borderColor = 'var(--red)';
+        inputPass.classList.add('shake');
+        inputPass.addEventListener('animationend', () => {
+          inputPass.classList.remove('shake');
+        }, { once: true });
+        inputPass.focus();
+        setTimeout(() => { inputPass.style.borderColor = ''; }, 1800);
+      }
+    } else {
+      const opId = document.getElementById('selectOperatorId')?.value || '76012041';
+      localStorage.setItem('cocacola_active_user', JSON.stringify({
+        role: 'OPERATOR', id: opId, name: `Operador: ${opId}`
+      }));
+      window.location.href = 'dashboard-coca-cola.html';
+    }
+  });
+});
+</script>
+</body>
+</html>

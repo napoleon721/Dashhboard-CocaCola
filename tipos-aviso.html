@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tipos de Aviso SAP PM | Coca-Cola</title>
+<link rel="icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="shortcut icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="apple-touch-icon" href="Recources/LogoCocaCola.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"><\/script>');}</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>if(typeof XLSX==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');}</script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="plant-data-source.js"></script>
+<script src="system-settings.js"></script>
+<script>
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const _fbStorage = firebase.storage();
+  const _fbDb = firebase.firestore();
+</script>
+<style>
+:root{
+  --red: #E4002B;
+  --red-dim: rgba(228,0,43,0.14);
+  --gold: #C9A24A;
+  --bg: #0E0E10;
+  --panel: #17171A;
+  --panel-2: #1C1C1F;
+  --line: rgba(255,255,255,0.08);
+  --line-soft: rgba(255,255,255,0.05);
+  --text: #F2F1EE;
+  --text-dim: #8B8990;
+  --text-faint: #57555C;
+  --ok: #3D9D6B;
+  --warn: #C9A24A;
+  --danger: #E4002B;
+  --radius: 14px;
+  --font: 'Poppins', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  font-size:14px;
+}
+::-webkit-scrollbar{ height:8px; width:8px; }
+::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.1); border-radius:8px; }
+
+.icon{ width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+
+/* Layout */
+.app{ display:grid; grid-template-columns: 76px 1fr; min-height:100vh; }
+@media (min-width: 1000px){ .app{ grid-template-columns: 236px 1fr; } }
+
+/* Sidebar */
+.sidebar{
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display:flex; flex-direction:column;
+  padding: 20px 12px;
+  position:sticky; top:0; height:100vh;
+}
+.logo-slot{
+  display:flex; align-items:center; gap:10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 24px;
+  min-height: 56px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); overflow: hidden;
+}
+.logo-slot .official-logo{ max-height: 34px; max-width: 72px; width: auto; object-fit: contain; flex-shrink: 0; }
+.logo-slot .cap{ font-size:10px; line-height:1.25; display:none; flex:1; min-width:0; overflow:hidden; }
+@media (min-width:1000px){ .logo-slot .cap{ display:block; } }
+
+.nav{ display:flex; flex-direction:column; gap:2px; }
+.nav a{
+  display:flex; align-items:center; gap:12px; text-decoration:none; color: var(--text-dim);
+  padding: 10px 12px; border-radius: 9px; font-size:13px; font-weight:500;
+  transition: background .18s ease, color .18s ease; white-space:nowrap; position:relative;
+}
+.nav a span.label{ display:none; }
+@media (min-width:1000px){ .nav a span.label{ display:inline; } }
+.nav a:hover{ background: var(--line-soft); color: var(--text); }
+.nav a.active{ background: var(--red-dim); color: var(--text); }
+.nav a.active::before{ content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:2.5px; background: var(--red); border-radius: 2px; }
+.nav-sep{ margin: 18px 12px 8px; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color: var(--text-faint); display:none; }
+@media (min-width:1000px){ .nav-sep{ display:block; } }
+
+/* Main */
+.main{ padding: 24px 20px 60px; }
+@media (min-width:1000px){ .main{ padding: 30px 40px 70px; } }
+
+.topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+.topbar h1{ font-weight:600; font-size: 19px; letter-spacing:-0.2px; }
+.topbar .greet{ font-size:12px; color: var(--text-dim); margin-top:3px; }
+.topbar-right{ display:flex; align-items:center; gap:10px; }
+.search{ display:flex; align-items:center; gap:8px; background: var(--panel-2); border:1px solid var(--line); padding:8px 13px; border-radius: 9px; min-width:200px; }
+.search input{ background:none; border:none; outline:none; color:var(--text); font-size:12.5px; width:100%; font-family: var(--font); }
+.search input::placeholder{ color: var(--text-faint); }
+
+.icon-btn{ width:36px; height:36px; border-radius:9px; background: var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; color:var(--text-dim); transition: border-color .18s ease, color .18s ease, background .18s ease, transform .12s ease; }
+.icon-btn:hover{ border-color: rgba(255,255,255,0.22); color: var(--text); background: rgba(255,255,255,0.06); }
+.icon-btn:active{ transform: scale(.94); }
+.badge-count{ position:absolute; top:-5px; right:-5px; background: var(--red); color:#fff; font-size:9px; font-weight:600; min-width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition: transform .2s ease; }
+
+/* Notif Popover */
+.notif-popover {
+  position: absolute; top: 48px; right: 0; width: 370px; max-width: calc(100vw - 32px);
+  background: rgba(23, 23, 26, 0.96); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.65); z-index: 1000; display: none; flex-direction: column; overflow: hidden;
+}
+.notif-popover.active { display: flex; }
+.notif-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.notif-title { font-size: 13px; font-weight: 600; color: var(--text); display:flex; align-items:center; gap:8px; }
+.notif-chip { font-size: 9.5px; font-family: var(--mono); color: var(--red); background: var(--red-dim); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(228,0,43,0.3); font-weight: 600; }
+.notif-list { max-height: 330px; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.notif-item { display: flex; gap: 10px; padding: 11px 12px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background .18s ease, border-color .18s ease, transform .15s ease; }
+.notif-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); transform: translateX(2px); }
+.notif-item-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.notif-item-content { flex: 1; min-width: 0; }
+.notif-item-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.notif-item-id { font-family: var(--mono); font-weight: 700; font-size: 11.5px; color: var(--gold); }
+.notif-item-time { font-size: 9.5px; font-family: var(--mono); color: var(--text-faint); }
+.notif-item-desc { font-size: 11px; color: var(--text-dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-item-ubic { font-size: 9.5px; font-family: var(--mono); color: var(--text-faint); margin-top: 2px; }
+.notif-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--line); background: rgba(0,0,0,0.25); font-size: 10px; color: var(--text-faint); }
+.notif-btn-clear { background: none; border: none; color: var(--gold); font-size: 11px; font-weight: 500; cursor: pointer; }
+
+hr.rule{ border:none; border-top:1px solid var(--line); margin: 22px 0; }
+
+/* Grid de Clases / Cards de Tipos */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.type-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;
+}
+.type-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  animation: fadeSlideUp .4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.type-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+.type-card:nth-child(1) { animation-delay: .04s; }
+.type-card:nth-child(2) { animation-delay: .08s; }
+.type-card:nth-child(3) { animation-delay: .12s; }
+.type-card:nth-child(4) { animation-delay: .16s; }
+.type-card:nth-child(5) { animation-delay: .20s; }
+.type-card.active-card { border-color: var(--gold); background: rgba(201,162,74,0.04); }
+
+.type-card-badge {
+  font-family: var(--mono); font-weight: 700; font-size: 12px; padding: 3px 10px;
+  border-radius: 6px; display: inline-block; margin-bottom: 12px;
+}
+.type-card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.type-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.35; margin-bottom: 16px; }
+.type-card-stats { display: flex; justify-content: space-between; align-items: flex-end; }
+.type-card-count { font-family: var(--mono); font-size: 24px; font-weight: 600; color: var(--text); }
+.type-card-pct { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+
+/* Grid de Gráficas */
+.charts-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+@media (min-width: 900px){ .charts-grid { grid-template-columns: 1fr 1fr; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.panel-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.panel-head h3 { font-size: 13px; font-weight: 600; color: var(--text); }
+.panel-head .meta { font-size: 10.5px; color: var(--text-faint); font-family: var(--mono); margin-top: 2px; }
+
+/* Tabla */
+.table-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.table-head-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.table-head-bar h2 { font-size: 14px; font-weight: 600; color: var(--text); }
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+table { width: 100%; border-collapse: collapse; text-align: left; min-width: 820px; }
+th {
+  background: var(--panel-2); color: var(--text-dim); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.6px; padding: 12px 16px; border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+td { padding: 13px 16px; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; color: var(--text); white-space: nowrap; }
+
+.mobile-scroll-hint {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--gold);
+  background: rgba(201,162,74,0.08);
+  border-bottom: 1px solid rgba(201,162,74,0.2);
+  padding: 8px 16px;
+  font-family: var(--mono);
+}
+@media (max-width: 850px) {
+  .mobile-scroll-hint { display: flex !important; }
+}
+tr:hover td { background: rgba(255,255,255,0.025); }
+
+.type-slot { font-family: var(--mono); font-weight: 700; font-size: 11px; color: var(--gold); }
+.status-slot { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 600; }
+.status-slot i { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.btn-action { background: var(--panel-2); border: 1px solid var(--line); color: var(--text-dim); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all .18s ease; font-family: var(--font); }
+.btn-action:hover { border-color: var(--red); color: #fff; background: var(--red-dim); }
+.btn-action:active { transform: scale(.95); }
+
+/* User Chip & Auth Modal */
+.user-chip-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text); padding: 6px 12px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 500; cursor: pointer;
+  transition: all .18s ease; font-family: var(--font);
+}
+.user-chip-btn:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); }
+.user-avatar-badge { font-size: 13px; }
+.user-name-txt { font-family: var(--mono); font-weight: 600; color: var(--gold); }
+
+.auth-modal-backdrop {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.auth-modal-backdrop.active { display: flex; }
+.auth-modal-card {
+  background: var(--panel); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 18px;
+  width: 480px; max-width: 100%; box-shadow: 0 24px 60px rgba(0,0,0,0.8); overflow: hidden;
+}
+.auth-modal-header {
+  padding: 18px 22px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.auth-modal-title { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.auth-modal-close { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 18px; }
+.auth-modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.role-option-card {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  cursor: pointer; transition: all .18s ease; display: flex; flex-direction: column; gap: 8px;
+}
+.role-option-card:hover { border-color: rgba(255,255,255,0.25); }
+.role-option-card.selected { border-color: var(--red); background: rgba(228,0,43,0.08); }
+.role-option-top { display: flex; align-items: center; justify-content: space-between; }
+.role-option-title { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.role-option-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+.auth-input {
+  background: var(--bg); border: 1px solid var(--line); color: var(--text);
+  padding: 9px 13px; border-radius: 8px; font-size: 12.5px; outline: none; width: 100%; font-family: var(--font);
+}
+.auth-input:focus { border-color: var(--gold); }
+
+/* Modal Ficha */
+.modal-backdrop { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); z-index:9000; display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-backdrop.active { display:flex; }
+.modal-card { background: var(--panel); border:1px solid rgba(255,255,255,0.15); border-radius:18px; width:560px; max-width:100%; overflow:hidden; }
+.modal-header { padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+.modal-close { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:18px; }
+.modal-body { padding:24px; display:flex; flex-direction:column; gap:16px; }
+.detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.detail-field { background:var(--panel-2); padding:12px 14px; border-radius:10px; border:1px solid var(--line-soft); }
+.detail-field label { font-size:10px; color:var(--text-faint); font-family:var(--mono); text-transform:uppercase; display:block; margin-bottom:4px; }
+.detail-field val { font-size:13px; font-weight:600; color:var(--text); }
+
+.mobile-menu-toggle {
+  display: none;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.mobile-menu-toggle:hover { background: rgba(255,255,255,0.08); }
+
+/* Backdrop Overlay para navegación móvil */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 1040;
+  opacity: 0; transition: opacity .25s ease;
+}
+.sidebar-overlay.active { display: block; opacity: 1; }
+
+.mobile-menu-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
+
+/* Responsive Media Queries */
+@media (max-width: 850px) {
+  .app { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+  .sidebar {
+    position: sticky; top: 0; z-index: 1100; height: auto; border-right: none;
+    border-bottom: 1px solid var(--line); padding: 12px 16px;
+    flex-direction: row; align-items: center; justify-content: space-between;
+    background: rgba(23, 23, 26, 0.98); backdrop-filter: blur(16px);
+  }
+  .logo-slot { margin-bottom: 0; min-height: 44px; padding: 6px 10px; }
+  .logo-slot .cap { display: block !important; font-size: 9.5px; }
+
+  .mobile-menu-toggle {
+    display: flex !important; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 9px;
+    background: var(--panel-2); border: 1px solid var(--line);
+  }
+
+  /* Menú desplegable superpuesto */
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(23, 23, 26, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    padding: 12px 16px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1050;
+    animation: navDropdownFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav.active-mobile-nav {
+    display: flex !important;
+  }
+  @keyframes navDropdownFade {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .nav a {
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .nav a span.label { display: inline !important; }
+  .nav a.active { background: var(--red-dim); border-color: rgba(228,0,43,0.3); }
+  .nav a.active::before { display: none; }
+  .nav-sep { display: block !important; margin: 8px 4px 4px; }
+  .sidebar-foot { display: none !important; }
+
+  .main { padding: 16px 14px 40px; }
+  .topbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .topbar-right { justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px; }
+  .search { flex: 1; min-width: 0; }
+  .notif-popover { right: -6px; width: calc(100vw - 20px); max-width: 380px; }
+
+  .type-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .table-head-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+
+@media (max-width: 500px) {
+  .type-grid { grid-template-columns: 1fr; }
+  .topbar h1 { font-size: 16.5px; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-slot" title="Plataforma de Avisos de Mantenimiento">
+      <img src="Recources/LogoCocaCola.png" alt="Coca-Cola Logo" class="official-logo" onerror="this.style.display='none';" />
+      <div class="cap">
+        <strong style="color:var(--text);font-size:10.5px;font-weight:600;display:block;line-height:1.2;letter-spacing:0.1px;">Plataforma de Avisos</strong>
+        <span style="color:var(--gold);font-weight:600;font-size:9.5px;display:block;margin-top:2px;">de Mantenimiento</span>
+      </div>
+    </div>
+
+    <button class="mobile-menu-toggle" id="mobileMenuToggleBtn" aria-label="Abrir menú de navegación">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <nav class="nav">
+      <a href="dashboard-coca-cola.html"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg><span class="label">Resumen</span></a>
+      <a href="avisos.html"><svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 1 5.4-5.4l-3.4 3.4-2-2z"/></svg><span class="label">Avisos</span></a>
+      <a href="ubicaciones.html"><svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="label">Equipos</span></a>
+      <a href="tipos-aviso.html" class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 13.5 12 22l-9-9 8.6-8.5H20a1 1 0 0 1 1 1z"/><circle cx="15.5" cy="8.5" r="1.2"/></svg><span class="label">Tipos de aviso</span></a>
+      <a href="alertas.html"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="label">Alertas</span></a>
+      <a href="historial-avisos.html"><svg class="icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg><span class="label">Historial de Avisos</span></a>
+      <a href="estadisticas.html"><svg class="icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span class="label">Estadísticas</span></a>
+      <div class="nav-sep">Datos</div>
+      <a href="dashboard-coca-cola.html"><svg class="icon" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg><span class="label">Excel / SAP</span></a>
+      <a href="#" id="sideSettingsBtn" class="btn-open-settings" style="cursor:pointer;"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="label">Configuración</span></a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sync-chip">
+        <span class="dot"></span>
+        <span class="txt">Catálogo SAP PM Activo</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Catálogo y Análisis de Tipos de Aviso SAP PM</h1>
+        <div class="greet">Desglose por Técnico de Mantenimiento (ZM), Parada de Equipo (ZA), Creado por Inspección (ZI) y Operador Autónomo (ZN)</div>
+      </div>
+      <div class="topbar-right">
+        <button class="user-chip-btn" id="userProfileBtn" title="Cambiar usuario o rol de acceso">
+          <span class="user-avatar-badge" id="userRoleIcon">🛡️</span>
+          <span class="user-name-txt" id="userNameLabel">Master: sv001437</span>
+          <svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;margin-left:2px;"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="search">
+          <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;color:#57555C"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="topSearchInput" placeholder="Buscar por aviso o texto..." />
+        </div>
+        <div style="position:relative;">
+          <div class="icon-btn" id="notifBtn" title="Notificaciones">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            <span class="badge-count" id="notifBadge">0</span>
+          </div>
+          <div class="notif-popover" id="notifPopover">
+            <div class="notif-header">
+              <div class="notif-title">Notificaciones SAP PM</div>
+              <span class="notif-chip" id="notifChipCount">0 pendientes</span>
+            </div>
+            <div class="notif-list" id="notifList"></div>
+            <div class="notif-footer">
+              <span>Planta Industrial Coca-Cola</span>
+            </div>
+          </div>
+        </div>
+        <button class="icon-btn" id="globalSettingsBtn" title="Configuración del Sistema" style="cursor:pointer;">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <hr class="rule">
+
+    <!-- 4 CARDS DE TIPOS DE AVISO -->
+    <div class="type-grid">
+      <div class="type-card active-card" data-class="ALL" id="cardALL">
+        <span class="type-card-badge" style="background:rgba(255,255,255,0.08); color:var(--text);">TODOS</span>
+        <div class="type-card-title">Total de Avisos</div>
+        <div class="type-card-desc">Catálogo completo de notificaciones registradas en la planta</div>
+        <div class="type-card-stats">
+          <div class="type-card-count" id="countALL">0</div>
+          <div class="type-card-pct">100% de la carga</div>
+        </div>
+      </div>
+
+      <div class="type-card" data-class="ZM" id="cardZM">
+        <span class="type-card-badge" style="background:rgba(228,0,43,0.18); color:#E4002B; border:1px solid rgba(228,0,43,0.3);">ZM</span>
+        <div class="type-card-title">Técnico de Mantenimiento</div>
+        <div class="type-card-desc">Avisos generados por personal técnico especializado de mantenimiento</div>
+        <div class="type-card-stats">
+          <div class="type-card-count" id="countZM">0</div>
+          <div class="type-card-pct" id="pctZM">0%</div>
+        </div>
+      </div>
+
+      <div class="type-card" data-class="ZA" id="cardZA">
+        <span class="type-card-badge" style="background:rgba(201,162,74,0.18); color:#C9A24A; border:1px solid rgba(201,162,74,0.3);">ZA</span>
+        <div class="type-card-title">Parada de Equipo</div>
+        <div class="type-card-desc">Avisos asociados a detención o paro operativo de máquinas de línea</div>
+        <div class="type-card-stats">
+          <div class="type-card-count" id="countZA">0</div>
+          <div class="type-card-pct" id="pctZA">0%</div>
+        </div>
+      </div>
+
+      <div class="type-card" data-class="ZI" id="cardZI">
+        <span class="type-card-badge" style="background:rgba(61,157,107,0.18); color:#3D9D6B; border:1px solid rgba(61,157,107,0.3);">ZI</span>
+        <div class="type-card-title">Aviso Creado por Inspección</div>
+        <div class="type-card-desc">Avisos detectados y generados durante inspecciones y auditorías técnicas</div>
+        <div class="type-card-stats">
+          <div class="type-card-count" id="countZI">0</div>
+          <div class="type-card-pct" id="pctZI">0%</div>
+        </div>
+      </div>
+
+      <div class="type-card" data-class="ZN" id="cardZN">
+        <span class="type-card-badge" style="background:rgba(87,85,92,0.25); color:#8B8990; border:1px solid rgba(87,85,92,0.4);">ZN</span>
+        <div class="type-card-title">Operador Autónomo</div>
+        <div class="type-card-desc">Avisos generados directamente por los operadores de línea de producción</div>
+        <div class="type-card-stats">
+          <div class="type-card-count" id="countZN">0</div>
+          <div class="type-card-pct" id="pctZN">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELES DE GRÁFICAS -->
+    <div class="charts-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Distribución Porcentual por Clase</h3>
+            <div class="meta" id="chart1Meta">Cargando gráfico...</div>
+          </div>
+        </div>
+        <div style="height:230px; position:relative;">
+          <canvas id="chartDoughnutTypes"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Estatus de Cierre por Tipo de Aviso</h3>
+            <div class="meta">Abiertos (MEAB) vs. Cerrados (MECE) por clase</div>
+          </div>
+        </div>
+        <div style="height:230px; position:relative;">
+          <canvas id="chartBarStatusTypes"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA FILTRADA POR TIPO DE AVISO -->
+    <div class="table-card">
+      <div class="table-head-bar">
+        <h2>
+          <span id="tableTitleTxt">Listado General de Avisos</span>
+          <span style="font-size:11px; font-family:var(--mono); color:var(--gold); font-weight:normal;" id="tableCountTxt">0 avisos</span>
+        </h2>
+        <div style="font-size:11px; color:var(--text-faint);">Haz clic en cualquier tarjeta de arriba para filtrar la tabla por tipo</div>
+      </div>
+      <div class="mobile-scroll-hint">
+        <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M17 8l4 4-4 4M7 8l-4 4 4 4"/></svg>
+        Desliza horizontalmente para ver todos los datos de los avisos
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>N.º Aviso</th>
+              <th>Descripción / Texto Breve</th>
+              <th>Tipo SAP</th>
+              <th>Equipo</th>
+              <th>Status Sistema</th>
+              <th>Fecha Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="typesTbody">
+            <!-- Carga dinámica -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL FICHA TÉCNICA -->
+<div class="modal-backdrop" id="avisoModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalTitle">Ficha Técnica de Aviso SAP PM</h3>
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-field"><label>Número de Aviso (PK)</label><val id="modalAvisoId">—</val></div>
+        <div class="detail-field"><label>N.º Orden de Trabajo (OT SAP)</label><val id="modalOrdenId" style="color:var(--gold); font-weight:600;">—</val></div>
+        <div class="detail-field"><label>Tipo de Aviso</label><val id="modalTipo">—</val></div>
+        <div class="detail-field"><label>Status de Sistema</label><val id="modalStatus">—</val></div>
+        <div class="detail-field"><label>Fecha de Creación</label><val id="modalFecha">—</val></div>
+        <div class="detail-field" style="grid-column: span 2;"><label>Equipo</label><val id="modalUbic">—</val></div>
+        <div class="detail-field" style="grid-column: span 2;"><label>Descripción Completa / Texto Breve</label><val id="modalDesc" style="font-size:12px; font-weight:400; line-height:1.4;">—</val></div>
+        <div class="detail-field"><label>Notificador / Autor</label><val id="modalAutor">—</val></div>
+        <div class="detail-field"><label>Planta / Operación</label><val>Coca-Cola Planta Industrial</val></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentRows = [];
+let selectedClass = 'ALL';
+let chart1Obj = null, chart2Obj = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Precarga instantánea sincrónica si los datos ya están disponibles
+  if (typeof window.DEFAULT_EMBEDDED_CSV === 'string' && currentRows.length === 0) {
+    try {
+      currentRows = parseCSVText(window.DEFAULT_EMBEDDED_CSV);
+      window.currentRows = currentRows;
+      renderTypeCards();
+      renderTypeCharts();
+      renderTable();
+      updateNotifications();
+    } catch(e){}
+  }
+  loadBaseCSV();
+});
+
+function withTimeout(promise, ms = 1000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de red')), ms))
+  ]);
+}
+
+function setupRealtimeCloudSync() {
+  if (typeof _fbDb !== 'undefined') {
+    try {
+      _fbDb.collection('plant_data').doc('active_csv').onSnapshot(docSnap => {
+        if (docSnap && docSnap.exists) {
+          const dData = docSnap.data();
+          if (dData && dData.csvText && dData.csvText.trim().length > 0) {
+            loadBaseCSV();
+          }
+        }
+      }, err => {});
+    } catch(e) {}
+  }
+}
+
+async function loadBaseCSV() {
+  let text = '';
+
+  // 1. Intentar desde Firestore Cloud
+  try {
+    if (typeof _fbDb !== 'undefined') {
+      const docSnap = await withTimeout(_fbDb.collection('plant_data').doc('active_csv').get(), 1000);
+      if (docSnap && docSnap.exists) {
+        const dData = docSnap.data();
+        if (dData && dData.csvText && dData.csvText.trim().length > 0) {
+          text = dData.csvText;
+        }
+      }
+    }
+  } catch(e) {}
+
+  // 2. Intentar desde Firebase Storage
+  if (!text) {
+    try {
+      if (typeof _fbStorage !== 'undefined') {
+        const storageRef = _fbStorage.ref(STORAGE_CSV_PATH);
+        const downloadURL = await withTimeout(storageRef.getDownloadURL(), 1000);
+        const freshURL = downloadURL + (downloadURL.includes('?') ? '&' : '?') + 't=' + Date.now();
+        const res = await fetch(freshURL);
+        if (res.ok) text = await res.text();
+      }
+    } catch(e) {}
+  }
+
+  // 3. Fallback LocalStorage
+  if (!text) {
+    try {
+      const localCsv = localStorage.getItem('cocacola_active_csv');
+      if (localCsv && localCsv.trim().length > 0) text = localCsv;
+    } catch(e) {}
+  }
+
+  // 4. Fallback DBMANTTO.csv
+  if (!text) {
+    try {
+      const res = await fetch('DBMANTTO.csv?t=' + Date.now());
+      if (res.ok) text = await res.text();
+    } catch(e) {}
+  }
+
+  // 5. Fallback Dataset Embebido Centralizado (plant-data-source.js)
+  if (!text || text.trim().length === 0) {
+    if (typeof window.DEFAULT_EMBEDDED_CSV === 'string' && window.DEFAULT_EMBEDDED_CSV.length > 0) {
+      text = window.DEFAULT_EMBEDDED_CSV;
+    }
+  }
+
+  if (!text) return;
+  try {
+    currentRows = parseCSVText(text);
+  } catch(e) {
+    currentRows = [];
+  }
+  window.currentRows = currentRows;
+  renderTypeCards();
+  renderTypeCharts();
+  renderTable();
+  updateNotifications();
+}
+
+function parseCSVText(text) {
+  if (!text || typeof text !== 'string') return [];
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  let delim = ';';
+  const sample = lines.slice(0, 5).join('\n');
+  if (sample.includes(';')) delim = ';';
+  else if (sample.includes('\t')) delim = '\t';
+  else if (sample.includes(',')) delim = ',';
+
+  let headerIndex = 0;
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const cols = lines[i].split(delim).map(c => c.toLowerCase().trim());
+    if (cols.some(c => c.includes('aviso') || c.includes('notif') || c.includes('descrip') || c.includes('ubicac') || c.includes('status'))) {
+      headerIndex = i;
+      break;
+    }
+  }
+
+  const headers = lines[headerIndex].split(delim).map(h => h.trim().replace(/^["']|["']$/g, ''));
+  
+  const iAviso  = headers.findIndex(h => { const l = h.toLowerCase(); return (l.includes('aviso') || l.includes('notif') || l.includes('n.º') || l.includes('n°') || l.includes('id')) && !l.includes('clase') && !l.includes('fecha') && !l.includes('autor') && !l.includes('tipo'); });
+  let iDesc   = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('descrip') || l.includes('texto') || l.includes('titulo'); });
+  if (iDesc < 0) {
+    iDesc = headers.findIndex(h => h.toLowerCase().includes('denominac'));
+  }
+  const iClase  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('clase') || l.includes('tipo') || l.includes('cat'); });
+  const iEquipo = headers.findIndex(h => { const l = h.toLowerCase(); return l === 'equipo' || l.includes('nº equipo') || l.includes('cod equipo'); });
+  const iDenom  = headers.findIndex((h, idx) => idx !== iDesc && h.toLowerCase().includes('denominac'));
+  const iUbic   = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('ubicac') || l.includes('tecnic') || l.includes('técnic'); });
+  const iStatus = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('status') || l.includes('estado') || l.includes('est'); });
+  const iCreado = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('cread') || l.includes('fecha'); });
+  const iAutor  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('autor') || l.includes('notificad') || l.includes('user') || l.includes('usuario'); });
+  const iCierre = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('cierre') || l.includes('fin'); });
+  const iOrden  = headers.findIndex(h => { const l = h.toLowerCase(); return (l.includes('orden') || l.includes('ot') || l.includes('order')) && !l.includes('clase'); });
+  const iCosto  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('costo') || l.includes('importe') || l.includes('gasto') || l.includes('monto') || l.includes('valor'); });
+  const iMoneda = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('moneda') || l.includes('currency'); });
+
+  const idxAviso  = iAviso >= 0 ? iAviso : (headers.length > 7 ? 7 : 0);
+  const idxDesc   = iDesc >= 0 ? iDesc : (headers.length > 10 ? 10 : 1);
+  const idxClase  = iClase >= 0 ? iClase : 0;
+  const idxEquipo = iEquipo >= 0 ? iEquipo : 3;
+  const idxDenom  = iDenom >= 0 ? iDenom : 2;
+  const idxUbic   = iUbic >= 0 ? iUbic : 1;
+  const idxStatus = iStatus >= 0 ? iStatus : (headers.length > 12 ? 12 : 4);
+  const idxCreado = iCreado >= 0 ? iCreado : 5;
+  const idxAutor  = iAutor >= 0 ? iAutor : (headers.length > 9 ? 9 : 6);
+  const idxCierre = iCierre >= 0 ? iCierre : (headers.length > 13 ? 13 : -1);
+  const idxOrden  = iOrden >= 0 ? iOrden : (headers.length > 8 ? 8 : -1);
+  const idxCosto  = iCosto >= 0 ? iCosto : (headers.length > 14 ? 14 : -1);
+  const idxMoneda = iMoneda >= 0 ? iMoneda : (headers.length > 15 ? 15 : -1);
+
+  const orderCostMap = new Map();
+  if (headers.length >= 17) {
+    let costOrdIdx = -1, costValIdx = -1;
+    headers.forEach((h, idx) => {
+      const l = h.toLowerCase();
+      if (idx >= 14 && (l.includes('orden') || l.includes('ot'))) costOrdIdx = idx;
+      if (idx >= 14 && (l.includes('importe') || l.includes('costo') || l.includes('gasto') || l.includes('monto'))) costValIdx = idx;
+    });
+
+    if (costOrdIdx >= 0 && costValIdx >= 0) {
+      lines.slice(headerIndex + 1).forEach(line => {
+        const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
+        const ord = (cols[costOrdIdx] || '').trim();
+        const rawCost = parseFloat((cols[costValIdx] || '0').replace(/,/g, ''));
+        if (ord && !isNaN(rawCost)) {
+          orderCostMap.set(ord, (orderCostMap.get(ord) || 0) + rawCost);
+        }
+      });
+    }
+  }
+
+  return lines.slice(headerIndex + 1).map(line => {
+    const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
+    const valAviso = (cols[idxAviso] || cols[0] || '').trim();
+    if (!valAviso || valAviso === '—' || valAviso.toLowerCase().includes('aviso') || valAviso.toLowerCase().includes('n.º')) return null;
+
+    const eqVal = (cols[idxEquipo] || '').trim();
+    let denomEq = '';
+    if (idxEquipo >= 0 && cols[idxEquipo + 1] && idxEquipo + 1 !== idxDesc) {
+      denomEq = (cols[idxEquipo + 1] || '').trim();
+    }
+    if (!denomEq || denomEq === '—') {
+      denomEq = (cols[idxDenom] || '').trim();
+    }
+    const ubicVal = (cols[idxUbic] || '').trim();
+    let denomUbic = (cols[2] || '').trim();
+    if (!denomUbic || denomUbic === denomEq) denomUbic = ubicVal;
+
+    let equipoUbicStr = '—';
+    if (eqVal && eqVal !== '—') {
+      if (denomEq && denomEq !== '—' && denomEq !== eqVal) {
+        equipoUbicStr = `${eqVal} · ${denomEq}`;
+      } else {
+        equipoUbicStr = `${eqVal} (${ubicVal || 'Planta'})`;
+      }
+    } else if (denomEq && denomEq !== '—') {
+      equipoUbicStr = denomEq;
+    } else if (ubicVal && ubicVal !== '—') {
+      equipoUbicStr = ubicVal;
+    }
+
+    const valCierre = idxCierre >= 0 ? (cols[idxCierre] || '').trim() : '';
+    const valOrden  = idxOrden >= 0 ? (cols[idxOrden] || '—').trim() || '—' : '—';
+
+    let valCosto = 0.0;
+    if (idxCosto >= 0 && cols[idxCosto]) {
+      const parsedNum = parseFloat(cols[idxCosto].replace(/,/g, ''));
+      if (!isNaN(parsedNum)) valCosto = parsedNum;
+    } else if (valOrden && orderCostMap.has(valOrden)) {
+      valCosto = orderCostMap.get(valOrden);
+    }
+
+    const valMoneda = idxMoneda >= 0 && cols[idxMoneda] ? cols[idxMoneda].trim() : 'USD';
+
+    return [
+      valAviso,
+      (cols[idxDesc] || '—').trim() || '—',
+      (cols[idxClase] || 'ZA').trim() || 'ZA',
+      equipoUbicStr,
+      (cols[idxStatus] || 'MEAB').trim() || 'MEAB',
+      (cols[idxCreado] || '—').trim() || '—',
+      (cols[idxAutor] || '—').trim() || '—',
+      valCierre,
+      valOrden,
+      ubicVal,
+      denomUbic,
+      eqVal,
+      denomEq,
+      valCosto,
+      valMoneda
+    ];
+  }).filter(Boolean);
+}
+
+function renderTypeCards() {
+  const total = currentRows.length || 1;
+  const countZM = currentRows.filter(r => String(r[2] || '').includes('ZM')).length;
+  const countZA = currentRows.filter(r => String(r[2] || '').includes('ZA')).length;
+  const countZI = currentRows.filter(r => String(r[2] || '').includes('ZI')).length;
+  const countZN = currentRows.filter(r => String(r[2] || '').includes('ZN')).length;
+
+  document.getElementById('countALL').textContent = total;
+  document.getElementById('countZM').textContent  = countZM;
+  document.getElementById('countZA').textContent  = countZA;
+  document.getElementById('countZI').textContent  = countZI;
+  if(document.getElementById('countZN')) document.getElementById('countZN').textContent = countZN;
+
+  document.getElementById('pctZM').textContent = `${Math.round((countZM / total) * 100)}% del total`;
+  document.getElementById('pctZA').textContent = `${Math.round((countZA / total) * 100)}% del total`;
+  document.getElementById('pctZI').textContent = `${Math.round((countZI / total) * 100)}% del total`;
+  if(document.getElementById('pctZN')) document.getElementById('pctZN').textContent = `${Math.round((countZN / total) * 100)}% del total`;
+}
+
+function renderTypeCharts() {
+  if (typeof Chart === 'undefined') return;
+  const isMobile = window.innerWidth < 768;
+
+  const countZM = currentRows.filter(r => String(r[2] || '').includes('ZM')).length;
+  const countZA = currentRows.filter(r => String(r[2] || '').includes('ZA')).length;
+  const countZI = currentRows.filter(r => String(r[2] || '').includes('ZI')).length;
+  const countZN = currentRows.filter(r => String(r[2] || '').includes('ZN')).length;
+  const total   = countZM + countZA + countZI + countZN || 1;
+
+  document.getElementById('chart1Meta').textContent = `Dominancia ZM (Técnico Mantenimiento): ${Math.round((countZM/total)*100)}%`;
+
+  // Chart 1: Doughnut
+  const c1 = document.getElementById('chartDoughnutTypes');
+  if (c1) {
+    if (chart1Obj) chart1Obj.destroy();
+    chart1Obj = new Chart(c1, {
+      type: 'doughnut',
+      data: {
+        labels: ['ZM (Técnico Mantenimiento)', 'ZA (Parada de Equipo)', 'ZI (Creado por Inspección)', 'ZN (Operador Autónomo)'],
+        datasets: [{
+          data: [countZM, countZA, countZI, countZN],
+          backgroundColor: ['#E4002B', '#C9A24A', '#3D9D6B', '#57555C'],
+          borderColor: '#17171A', borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: isMobile ? '56%' : '65%',
+        plugins: {
+          legend: {
+            position: isMobile ? 'bottom' : 'right',
+            labels: { color: '#F2F1EE', font: { size: isMobile ? 10 : 11, family: 'Poppins' }, boxWidth: isMobile ? 10 : 12, padding: isMobile ? 8 : 12 }
+          },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} avisos (${Math.round((ctx.raw/total)*100)}%)` } }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Bar Status per Type
+  const c2 = document.getElementById('chartBarStatusTypes');
+  if (c2) {
+    const statusData = ['ZM', 'ZA', 'ZI', 'ZN'].map(typeKey => {
+      const rowsType = currentRows.filter(r => String(r[2] || '').includes(typeKey));
+      const open = rowsType.filter(r => !String(r[4] || '').includes('MECE')).length;
+      const closed = rowsType.length - open;
+      return { open, closed };
+    });
+
+    if (chart2Obj) chart2Obj.destroy();
+    chart2Obj = new Chart(c2, {
+      type: 'bar',
+      data: {
+        labels: isMobile ? ['ZM', 'ZA', 'ZI', 'ZN'] : ['ZM (Técnico Mantenimiento)', 'ZA (Parada de Equipo)', 'ZI (Creado por Inspección)', 'ZN (Operador Autónomo)'],
+        datasets: [
+          { label: 'Abiertos (MEAB)', data: statusData.map(d => d.open), backgroundColor: '#E4002B', borderRadius: 5 },
+          { label: 'Cerrados (MECE)', data: statusData.map(d => d.closed), backgroundColor: '#3D9D6B', borderRadius: 5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#F2F1EE', font: { size: isMobile ? 10 : 11 } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#8B8990', font: { size: isMobile ? 9.5 : 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#8B8990', font: { size: isMobile ? 9.5 : 10.5 } } }
+        }
+      }
+    });
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('typesTbody');
+  const countTxt = document.getElementById('tableCountTxt');
+  const titleTxt = document.getElementById('tableTitleTxt');
+  if (!tbody) return;
+
+  const searchQ = (document.getElementById('topSearchInput')?.value || '').toLowerCase();
+
+  const filtered = currentRows.filter(r => {
+    if (selectedClass !== 'ALL') {
+      const cls = String(r[2] || '').toUpperCase();
+      if (!cls.includes(selectedClass)) return false;
+    }
+    if (searchQ) {
+      const matchId   = String(r[0] || '').toLowerCase().includes(searchQ);
+      const matchDesc = String(r[1] || '').toLowerCase().includes(searchQ);
+      const matchUbic = String(r[3] || '').toLowerCase().includes(searchQ);
+      if (!matchId && !matchDesc && !matchUbic) return false;
+    }
+    return true;
+  });
+
+  if (countTxt) countTxt.textContent = `${filtered.length} avisos`;
+  if (titleTxt) {
+    titleTxt.textContent = selectedClass === 'ALL' ? 'Listado General de Avisos' : `Avisos Registrados de Clase ${selectedClass}`;
+  }
+
+  tbody.innerHTML = '';
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-faint);">No hay avisos registrados para el tipo seleccionado</td></tr>`;
+    return;
+  }
+
+function extractNoticeCategory(descStr) {
+  if (!descStr) return { code: 'GEN', label: 'GENERAL', fullLabel: 'GENERAL / OPERATIVO', icon: '⚙️', color: '#8B8990', bg: 'rgba(139,137,144,0.12)', border: 'rgba(139,137,144,0.3)', cleanDesc: '—' };
+
+  const raw = String(descStr).trim();
+  const upper = raw.toUpperCase();
+
+  let code = 'GEN';
+  let label = 'GENERAL';
+  let fullLabel = 'MANTENIMIENTO GENERAL';
+  let icon = '⚙️';
+  let color = '#8B8990';
+  let bg = 'rgba(139,137,144,0.12)';
+  let border = 'rgba(139,137,144,0.3)';
+  let cleanDesc = raw;
+
+  if (raw.includes('|')) {
+    const parts = raw.split('|');
+    const prefix = parts[0].trim().toUpperCase();
+    cleanDesc = parts.slice(1).join('|').trim();
+
+    if (prefix === 'MA' || prefix.includes('MEDIO') || prefix.includes('AMBIENTE')) {
+      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+    } else if (prefix === 'SEG' || prefix.includes('SEGURID')) {
+      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+    } else if (prefix === 'CI' || prefix.includes('INSEGURA')) {
+      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+    } else if (prefix === 'HER' || prefix.includes('HERRAMIENT')) {
+      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+    } else if (prefix === 'RQ' || prefix.includes('REQUERIMIEN')) {
+      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    }
+  } else {
+    if (/^(MA[:\s-]|MEDIO\s+AMBIENTE)/i.test(upper) || upper.includes('MEDIO AMBIENTE')) {
+      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+    } else if (/^(SEG[:\s-]|SEGURIDAD)/i.test(upper) || upper.includes('SEGURIDAD')) {
+      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+    } else if (/^(CI[:\s-]|CONDICION\s+INSEGURA|CONDICIÓN\s+INSEGURA)/i.test(upper) || upper.includes('CONDICION INSEGURA') || upper.includes('CONDICIÓN INSEGURA')) {
+      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+    } else if (/^(HER[:\s-]|HERRAMIENTA)/i.test(upper) || upper.includes('HERRAMIENTA')) {
+      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+    } else if (/^(RQ[:\s-]|REQUERIMIENTO)/i.test(upper) || upper.includes('REQUERIMIENTO')) {
+      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    }
+  }
+
+  return { code, label, fullLabel, icon, color, bg, border, cleanDesc };
+}
+
+  filtered.forEach(r => {
+    const isClosed = String(r[4] || '').includes('MECE');
+    const cat = extractNoticeCategory(r[1]);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div style="font-family:var(--mono); font-weight:700; color:var(--gold);">${r[0]}</div>
+        <div style="font-size:10px; font-family:var(--mono); color:var(--text-dim); margin-top:2px;" title="Número de Orden OT entregado al operador para trazabilidad">OT #${r[8] && r[8] !== '—' ? r[8] : '—'}</div>
+      </td>
+      <td title="${r[1]}">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:5px; background:${cat.bg}; color:${cat.color}; border:1px solid ${cat.border}; font-weight:600; white-space:nowrap;" title="${cat.fullLabel}">${cat.icon} ${cat.code} · ${cat.label}</span>
+          <span>${cat.cleanDesc.slice(0, 65)}</span>
+        </div>
+      </td>
+      <td><span class="type-slot">${r[2]}</span></td>
+      <td style="font-family:var(--mono); font-size:11px;">${r[3]}</td>
+      <td>
+        <span class="status-slot" style="color:${isClosed?'#3D9D6B':'#E4002B'}; border-color:${isClosed?'rgba(61,157,107,0.3)':'rgba(228,0,43,0.3)'}">
+          <i style="background:${isClosed?'#3D9D6B':'#E4002B'};"></i>${r[4]}
+        </span>
+      </td>
+      <td style="font-family:var(--mono); font-size:11px; color:var(--text-dim);">${r[5]}</td>
+      <td><button class="btn-action">Ficha Técnica</button></td>
+    `;
+
+    tr.querySelector('.btn-action').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal(r);
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+// Click en Cards de Clase
+document.querySelectorAll('.type-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active-card'));
+    card.classList.add('active-card');
+    selectedClass = card.getAttribute('data-class');
+    renderTable();
+  });
+});
+
+document.getElementById('topSearchInput')?.addEventListener('input', () => renderTable());
+
+// Modal Ficha
+function openModal(r) {
+  const modal = document.getElementById('avisoModal');
+  const cat = extractNoticeCategory(r[1]);
+
+  document.getElementById('modalTitle').textContent = `Ficha Técnica: Aviso #${r[0]}`;
+  document.getElementById('modalAvisoId').textContent = r[0];
+  if (document.getElementById('modalOrdenId')) {
+    document.getElementById('modalOrdenId').textContent = (r[8] && r[8] !== '—') ? `OT #${r[8]}` : 'Sin Orden Asignada';
+  }
+  document.getElementById('modalTipo').textContent = `${r[2]} (${cat.icon} ${cat.fullLabel})`;
+  document.getElementById('modalStatus').textContent = r[4];
+  document.getElementById('modalFecha').textContent = r[5];
+  document.getElementById('modalUbic').textContent = r[3];
+  document.getElementById('modalDesc').textContent = `${cat.icon} [Categoría: ${cat.fullLabel}] — ${cat.cleanDesc}`;
+  document.getElementById('modalAutor').textContent = r[6] || 'Sistema SAP PM';
+
+  modal.classList.add('active');
+}
+
+document.getElementById('modalCloseBtn')?.addEventListener('click', () => {
+  document.getElementById('avisoModal')?.classList.remove('active');
+});
+document.getElementById('avisoModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'avisoModal') document.getElementById('avisoModal')?.classList.remove('active');
+});
+
+// Popover Notificaciones
+function updateNotifications() {
+  const activeUser = typeof getActiveUser === 'function' ? getActiveUser() : { role: 'MASTER', id: 'sv001437' };
+  let openRows = currentRows.filter(r => !String(r[4] || '').includes('MECE'));
+
+  if (activeUser.role === 'OPERATOR') {
+    openRows = openRows.filter(r => String(r[6] || '').trim() === String(activeUser.id).trim());
+  }
+
+  const count = openRows.length;
+  const badge = document.getElementById('notifBadge');
+  const chip = document.getElementById('notifChipCount');
+  const list = document.getElementById('notifList');
+
+  if (badge) badge.textContent = count;
+  if (chip) {
+    if (activeUser.role === 'OPERATOR') {
+      chip.textContent = `${count} mis tareas`;
+      chip.style.background = 'rgba(61,157,107,0.15)';
+      chip.style.color = '#3D9D6B';
+      chip.style.borderColor = 'rgba(61,157,107,0.4)';
+    } else {
+      chip.textContent = `${count} pendientes`;
+      chip.style.background = 'var(--red-dim)';
+      chip.style.color = 'var(--red)';
+      chip.style.borderColor = 'rgba(228,0,43,0.3)';
+    }
+  }
+
+  if (!list) return;
+
+  if (count === 0) {
+    list.innerHTML = `
+      <div style="padding:20px; text-align:center; color:var(--text-dim); font-size:12px;">
+        <b>${activeUser.role === 'OPERATOR' ? '¡Sin tareas pendientes!' : '🎉 Planta al día'}</b>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = openRows.slice(0, 10).map(r => `
+    <div class="notif-item" onclick="openModal(['${r[0]}','${r[1]}','${r[2]}','${r[3]}','${r[4]}','${r[5]}','${r[6]}'])">
+      <span class="notif-item-dot" style="background:${activeUser.role==='OPERATOR'?'#3D9D6B':'#E4002B'};"></span>
+      <div class="notif-item-content">
+        <div class="notif-item-top">
+          <span class="notif-item-id">#${r[0]}</span>
+          <span class="notif-item-time">${r[5]}</span>
+        </div>
+        <div class="notif-item-desc">${r[1]}</div>
+        <div class="notif-item-ubic">📍 ${r[3]} · Autor: <strong>${r[6]}</strong></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('notifBtn')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('notifPopover')?.classList.toggle('active');
+});
+document.addEventListener('click', () => {
+  document.getElementById('notifPopover')?.classList.remove('active');
+});
+
+let resizeTimerTypes;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimerTypes);
+  resizeTimerTypes = setTimeout(() => {
+    if (typeof renderTypeCharts === 'function') {
+      renderTypeCharts();
+    }
+  }, 250);
+});
+
+// Control del menú desplegable superpuesto móvil
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('mobileMenuToggleBtn');
+  const navMenu   = document.querySelector('.nav');
+  const overlay   = document.getElementById('sidebarOverlay');
+
+  const closeMenu = () => {
+    if (navMenu) navMenu.classList.remove('active-mobile-nav');
+    if (overlay) overlay.classList.remove('active');
+  };
+
+  if (toggleBtn && navMenu) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = navMenu.classList.contains('active-mobile-nav');
+      if (isOpen) {
+        closeMenu();
+      } else {
+        navMenu.classList.add('active-mobile-nav');
+        if (overlay) overlay.classList.add('active');
+      }
+    });
+
+    if (overlay) {
+      overlay.addEventListener('click', closeMenu);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (navMenu.classList.contains('active-mobile-nav') && !navMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
+        closeMenu();
+      }
+    });
+
+    navMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+  }
+});
+</script>
+<!-- MODAL SELECCIÓN / LOGIN DE USUARIO -->
+<div class="auth-modal-backdrop" id="userAuthModal">
+  <div class="auth-modal-card">
+    <div class="auth-modal-header">
+      <div class="auth-modal-title">
+        <svg class="icon" viewBox="0 0 24 24" style="color:var(--gold);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Acceso y Perfil de Usuario SAP PM
+      </div>
+      <button class="auth-modal-close" id="authModalCloseBtn">&times;</button>
+    </div>
+    <div class="auth-modal-body">
+      <div style="font-size:12px; color:var(--text-dim);">Seleccione el perfil de usuario con el que desea interactuar en la plataforma:</div>
+      
+      <!-- Opción 1: Master -->
+      <div class="role-option-card selected" id="optMasterCard">
+        <div class="role-option-top">
+          <div class="role-option-title">🛡️ Usuario Master (<span style="font-family:var(--mono); color:var(--gold);">sv001437</span>)</div>
+          <span style="font-size:10px; font-family:var(--mono); color:var(--gold); background:rgba(201,162,74,0.15); padding:2px 6px; border-radius:4px;">ADMIN</span>
+        </div>
+        <div class="role-option-desc">Permisos de administración: Cargar archivos Excel/SAP PM, actualizar la base de datos y ver notificaciones globales.</div>
+        <div id="masterPassBox" style="margin-top:4px;">
+          <label style="font-size:10.5px; color:var(--text-faint); font-family:var(--mono); display:block; margin-bottom:4px;">CONTRASEÑA DE ADMINISTRADOR:</label>
+          <input type="password" class="auth-input" id="inputMasterPass" placeholder="Ingrese contraseña master" autocomplete="current-password" />
+        </div>
+      </div>
+
+      <!-- Opción 2: Operador -->
+      <div class="role-option-card" id="optOperatorCard">
+        <div class="role-option-top">
+          <div class="role-option-title">👤 Operador de Planta (Por ID de Autor)</div>
+          <span style="font-size:10px; font-family:var(--mono); color:var(--ok); background:rgba(61,157,107,0.15); padding:2px 6px; border-radius:4px;">OPERADOR</span>
+        </div>
+        <div class="role-option-desc">Sin contraseña. Acceso a consulta y notificaciones filtradas exclusivamente con tus trabajos asignados.</div>
+        <div id="operatorSelectBox" style="margin-top:4px; display:none;">
+          <label style="font-size:10.5px; color:var(--text-faint); font-family:var(--mono); display:block; margin-bottom:4px;">SELECCIONE SU ID DE AUTOR (NOTIFICADOR):</label>
+          <select class="auth-input" id="selectOperatorId">
+            <!-- Dinámico desde base de datos -->
+          </select>
+        </div>
+      </div>
+
+      <button class="btn primary" id="btnConfirmAuth" style="width:100%; justify-content:center; padding:10px; font-size:13px; font-weight:600; margin-top:6px;">
+        Iniciar Sesión / Confirmar Rol
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROTECCIÓN DE CARGA MASTER -->
+<div class="auth-modal-backdrop" id="masterRequiredModal">
+  <div class="auth-modal-card">
+    <div class="auth-modal-header" style="border-bottom-color:rgba(228,0,43,0.3);">
+      <div class="auth-modal-title" style="color:var(--red);">
+        <svg class="icon" viewBox="0 0 24 24" style="color:var(--red);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        🔐 Permiso de Carga Restringido
+      </div>
+      <button class="auth-modal-close" id="masterReqCloseBtn">&times;</button>
+    </div>
+    <div class="auth-modal-body">
+      <div style="font-size:12px; color:var(--text); line-height:1.4;">
+        Solo el <strong>Usuario Master (ID: sv001437)</strong> está autorizado para cargar o actualizar archivos de datos Excel / SAP PM.
+      </div>
+      <div>
+        <label style="font-size:10.5px; color:var(--text-faint); font-family:var(--mono); display:block; margin-bottom:4px;">INGRESE CONTRASEÑA MASTER PARA CONTINUAR:</label>
+        <input type="password" class="auth-input" id="inputMasterReqPass" placeholder="Contraseña de Usuario Master" />
+      </div>
+      <button class="btn primary" id="btnConfirmMasterReq" style="width:100%; justify-content:center; padding:10px; font-size:13px; font-weight:600;">
+        Verificar e Iniciar Carga
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// SISTEMA DE AUTENTICACIÓN Y ROLES: MASTER (sv001437) & OPERADORES POR ID
+// ============================================================================
+const MASTER_ID = 'sv001437';
+const MASTER_PASS = 'master123';
+
+function getActiveUser() {
+  const saved = sessionStorage.getItem('cocacola_active_user') || localStorage.getItem('cocacola_active_user');
+  if (saved) {
+    try { return JSON.parse(saved); } catch(e){}
+  }
+  return { role: 'OPERATOR', id: 'GUEST', name: 'Operador Invitado' };
+}
+
+function setActiveUser(userObj) {
+  sessionStorage.setItem('cocacola_active_user', JSON.stringify(userObj));
+  localStorage.setItem('cocacola_active_user', JSON.stringify(userObj));
+  window.__authPrompted = true;
+  checkMandatoryAuth();
+}
+
+let inactivityTimer = null;
+let inactivityWarningTimer = null;
+let inactivityCountdownInterval = null;
+let inactivitySecondsLeft = 60;
+
+function setupInactivityTimer() {
+  const resetTimer = () => {
+    const user = getActiveUser();
+    if (!user) return;
+
+    hideInactivityWarning();
+
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    if (inactivityWarningTimer) clearTimeout(inactivityWarningTimer);
+    if (inactivityCountdownInterval) clearInterval(inactivityCountdownInterval);
+
+    inactivityWarningTimer = setTimeout(() => {
+      showInactivityWarning();
+    }, 540000);
+
+    inactivityTimer = setTimeout(() => {
+      logoutDueToInactivity();
+    }, 600000);
+  };
+
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+    window.addEventListener(evt, resetTimer, { passive: true });
+  });
+
+  resetTimer();
+}
+
+function showInactivityWarning() {
+  let warningEl = document.getElementById('inactivityWarningBanner');
+  if (!warningEl) {
+    warningEl = document.createElement('div');
+    warningEl.id = 'inactivityWarningBanner';
+    warningEl.style.cssText = `
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, rgba(228,0,43,0.95), rgba(201,162,74,0.95));
+      color: #FFF; padding: 12px 24px; border-radius: 12px; font-size: 13.5px;
+      font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 10000;
+      display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+    `;
+    document.body.appendChild(warningEl);
+  }
+
+  inactivitySecondsLeft = 60;
+  warningEl.style.display = 'flex';
+  warningEl.innerHTML = `
+    <span style="font-size:18px;">⚠️</span>
+    <div>
+      <div>Cierre de sesión por inactividad en <strong id="inactivityCountdown">60s</strong></div>
+      <div style="font-size:11px; opacity:0.9; font-weight:400;">Mueve el cursor o presiona cualquier tecla para continuar en el sistema</div>
+    </div>
+  `;
+
+  if (inactivityCountdownInterval) clearInterval(inactivityCountdownInterval);
+  inactivityCountdownInterval = setInterval(() => {
+    inactivitySecondsLeft--;
+    const cntEl = document.getElementById('inactivityCountdown');
+    if (cntEl) cntEl.textContent = `${inactivitySecondsLeft}s`;
+    if (inactivitySecondsLeft <= 0) {
+      clearInterval(inactivityCountdownInterval);
+      logoutDueToInactivity();
+    }
+  }, 1000);
+}
+
+function hideInactivityWarning() {
+  const warningEl = document.getElementById('inactivityWarningBanner');
+  if (warningEl) warningEl.style.display = 'none';
+  if (inactivityCountdownInterval) clearInterval(inactivityCountdownInterval);
+}
+
+function logoutDueToInactivity() {
+  hideInactivityWarning();
+  sessionStorage.removeItem('cocacola_active_user');
+  localStorage.removeItem('cocacola_active_user');
+  checkMandatoryAuth();
+  if (typeof showToast === 'function') {
+    showToast('🔒 Sesión cerrada por inactividad. Por favor inicie sesión de nuevo.');
+  }
+}
+
+function checkMandatoryAuth() {
+  const user = getActiveUser();
+  const modal = document.getElementById('userAuthModal');
+  const closeBtn = document.getElementById('authModalCloseBtn');
+
+  if (modal) {
+    modal.classList.remove('mandatory');
+  }
+  if (closeBtn) closeBtn.style.display = 'block';
+  updateUserUI();
+  setupInactivityTimer();
+  if (typeof updateNotifications === 'function') updateNotifications();
+}
+
+function updateUserUI() {
+  const user = getActiveUser();
+  const iconEl = document.getElementById('userRoleIcon');
+  const labelEl = document.getElementById('userNameLabel');
+
+  if (iconEl && labelEl) {
+    if (!user) {
+      iconEl.textContent = '🔒';
+      labelEl.textContent = 'Iniciar Sesión';
+      labelEl.style.color = 'var(--text-dim)';
+    } else if (user.role === 'MASTER') {
+      iconEl.textContent = '🛡️';
+      labelEl.textContent = `Master: ${user.id}`;
+      labelEl.style.color = 'var(--gold)';
+    } else {
+      iconEl.textContent = '👤';
+      labelEl.textContent = `Op: ${user.id}`;
+      labelEl.style.color = '#3D9D6B';
+    }
+  }
+
+  // Secciones solo visibles para Master
+  const isMaster = user && user.role === 'MASTER';
+  const sourceBlock = document.getElementById('masterOnlySourceBlock');
+  if (sourceBlock) sourceBlock.style.display = isMaster ? '' : 'none';
+  document.querySelectorAll('.master-only-nav').forEach(el => {
+    el.style.display = isMaster ? '' : 'none';
+  });
+}
+
+function getUniqueAuthors(rows) {
+  const set = new Set();
+  (rows || []).forEach(r => {
+    const autor = String(r[6] || '').trim();
+    if (autor && autor !== '—' && autor !== 'Notificador' && autor !== 'Autor') {
+      set.add(autor);
+    }
+  });
+  const arr = Array.from(set).sort();
+  if (arr.length === 0) return ['11136PAE','12000','12000PAE','12324PAE','76001946','76001947','76001959','76002032','76002037','76002049','76002264','76011305','76012041','76012271','76012405','76012411','76012468','76012470','76015706'];
+  return arr;
+}
+
+function populateOperatorSelect(rows) {
+  const select = document.getElementById('selectOperatorId');
+  if (!select) return;
+  const authors = getUniqueAuthors(rows);
+  select.innerHTML = authors.map(a => `<option value="${a}">ID Autor: ${a}</option>`).join('');
+}
+
+function requestMasterUpload(onSuccess) {
+  const user = getActiveUser();
+  if (user && user.role === 'MASTER') {
+    onSuccess();
+  } else {
+    const modal = document.getElementById('masterRequiredModal');
+    if (!modal) {
+      onSuccess();
+      return;
+    }
+    
+    modal.classList.add('active');
+    const passInput = document.getElementById('inputMasterReqPass');
+    const confirmBtn = document.getElementById('btnConfirmMasterReq');
+    if (passInput) passInput.value = '';
+
+    const handleConfirm = () => {
+      if (passInput && (passInput.value === MASTER_PASS || passInput.value === MASTER_ID)) {
+        setActiveUser({ role: 'MASTER', id: MASTER_ID, name: 'Master: sv001437' });
+        modal.classList.remove('active');
+        onSuccess();
+      } else {
+        alert('❌ Contraseña Master incorrecta. Solamente el usuario sv001437 puede subir archivos.');
+      }
+    };
+
+    if (confirmBtn) confirmBtn.onclick = handleConfirm;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkMandatoryAuth();
+
+  const userProfileBtn = document.getElementById('userProfileBtn');
+  const userAuthModal = document.getElementById('userAuthModal');
+  const authCloseBtn = document.getElementById('authModalCloseBtn');
+  const masterReqCloseBtn = document.getElementById('masterReqCloseBtn');
+  const masterModal = document.getElementById('masterRequiredModal');
+
+  const optMasterCard = document.getElementById('optMasterCard');
+  const optOperatorCard = document.getElementById('optOperatorCard');
+  const masterPassBox = document.getElementById('masterPassBox');
+  const operatorSelectBox = document.getElementById('operatorSelectBox');
+  const btnConfirmAuth = document.getElementById('btnConfirmAuth');
+
+  let selectedRole = 'MASTER';
+
+  if (userProfileBtn && userAuthModal) {
+    userProfileBtn.addEventListener('click', () => {
+      populateOperatorSelect(window.currentRows || []);
+      const user = getActiveUser();
+      selectedRole = user.role;
+      
+      if (selectedRole === 'MASTER') {
+        optMasterCard.classList.add('selected');
+        optOperatorCard.classList.remove('selected');
+        masterPassBox.style.display = 'block';
+        operatorSelectBox.style.display = 'none';
+      } else {
+        optOperatorCard.classList.add('selected');
+        optMasterCard.classList.remove('selected');
+        masterPassBox.style.display = 'none';
+        operatorSelectBox.style.display = 'block';
+        const sel = document.getElementById('selectOperatorId');
+        if (sel) sel.value = user.id;
+      }
+
+      userAuthModal.classList.add('active');
+    });
+  }
+
+  if (optMasterCard && optOperatorCard) {
+    optMasterCard.addEventListener('click', () => {
+      selectedRole = 'MASTER';
+      optMasterCard.classList.add('selected');
+      optOperatorCard.classList.remove('selected');
+      masterPassBox.style.display = 'block';
+      operatorSelectBox.style.display = 'none';
+    });
+
+    optOperatorCard.addEventListener('click', () => {
+      selectedRole = 'OPERATOR';
+      optOperatorCard.classList.add('selected');
+      optMasterCard.classList.remove('selected');
+      masterPassBox.style.display = 'none';
+      operatorSelectBox.style.display = 'block';
+    });
+  }
+
+  if (btnConfirmAuth) {
+    btnConfirmAuth.addEventListener('click', () => {
+      if (selectedRole === 'MASTER') {
+        const pass = document.getElementById('inputMasterPass')?.value;
+        if (pass === MASTER_PASS || pass === MASTER_ID) {
+          setActiveUser({ role: 'MASTER', id: MASTER_ID, name: 'Master: sv001437' });
+          userAuthModal.classList.remove('active');
+        } else {
+          alert('❌ Contraseña Master incorrecta. Use master123');
+        }
+      } else {
+        const opId = document.getElementById('selectOperatorId')?.value || '76012041';
+        setActiveUser({ role: 'OPERATOR', id: opId, name: `Operador: ${opId}` });
+        userAuthModal.classList.remove('active');
+      }
+    });
+  }
+
+  if (authCloseBtn) authCloseBtn.onclick = () => userAuthModal.classList.remove('active');
+  if (masterReqCloseBtn) masterReqCloseBtn.onclick = () => masterModal.classList.remove('active');
+
+  // Intercept upload buttons
+  ['sideUploadBtn', 'sideUploadBtn2', 'btnCargaMasiva', 'sourceUploadBtn'].forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        requestMasterUpload(() => {
+          document.getElementById('excelUploadInput')?.click();
+        });
+      });
+    }
+  });
+});
+</script>
+</body>
+</html>

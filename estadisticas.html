@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estadísticas Ejecutivas & Analytics | Coca-Cola</title>
+<link rel="icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="shortcut icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="apple-touch-icon" href="Recources/LogoCocaCola.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"><\/script>');}</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>if(typeof XLSX==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');}</script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="plant-data-source.js"></script>
+<script src="system-settings.js"></script>
+<script>
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const _fbStorage = firebase.storage();
+  const _fbDb = firebase.firestore();
+</script>
+<style>
+:root{
+  --red: #E4002B;
+  --red-dim: rgba(228,0,43,0.14);
+  --gold: #C9A24A;
+  --gold-dim: rgba(201,162,74,0.15);
+  --bg: #0E0E10;
+  --panel: #17171A;
+  --panel-2: #1C1C1F;
+  --line: rgba(255,255,255,0.08);
+  --line-soft: rgba(255,255,255,0.05);
+  --text: #F2F1EE;
+  --text-dim: #8B8990;
+  --text-faint: #57555C;
+  --ok: #3D9D6B;
+  --warn: #C9A24A;
+  --danger: #E4002B;
+  --cyan: #00D2FF;
+  --purple: #9D4EDD;
+  --radius: 14px;
+  --font: 'Poppins', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  font-size:14px;
+}
+::-webkit-scrollbar{ height:8px; width:8px; }
+::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.1); border-radius:8px; }
+
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 250px; background: var(--panel); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 100;
+}
+.logo-slot { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 0 8px; }
+.official-logo { height: 32px; width: auto; object-fit: contain; }
+.logo-slot .cap { font-size: 11px; color: var(--text-dim); }
+
+.nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.nav a {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: 10px; color: var(--text-dim); text-decoration: none;
+  font-weight: 500; font-size: 13.5px; transition: all .2s ease;
+}
+.nav a:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav a.active { background: var(--red-dim); color: var(--red); font-weight: 600; }
+.nav a .icon { width: 18px; height: 18px; stroke-width: 2; stroke: currentColor; fill: none; }
+.nav-sep { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-faint); margin: 18px 14px 6px; letter-spacing: 1px; }
+
+.sidebar-foot { padding-top: 16px; border-top: 1px solid var(--line); margin-top: 16px; }
+.sync-chip {
+  display: flex; align-items: center; gap: 8px; font-size: 11.5px;
+  color: var(--text-dim); background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;
+}
+.sync-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+.main { flex: 1; padding: 32px 40px; overflow-x: hidden; max-width: 1600px; }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.topbar h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+.topbar .greet { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+
+.controls-bar {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  background: var(--panel); padding: 16px 20px; border-radius: var(--radius);
+  border: 1px solid var(--line); margin-bottom: 24px;
+}
+.filter-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.select-input, .search-box input {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+  padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-family: var(--font); outline: none;
+}
+.select-input:focus, .search-box input:focus { border-color: var(--gold); }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; background: var(--panel-2);
+  border: 1px solid var(--line); color: var(--text); padding: 9px 16px; border-radius: 9px;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all .2s ease; font-family: var(--font);
+}
+.btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--red); border-color: var(--red); color: #FFF; box-shadow: 0 4px 14px rgba(228,0,43,0.3); }
+.btn.primary:hover { background: #C40024; box-shadow: 0 6px 20px rgba(228,0,43,0.45); }
+.btn.primary:active { transform: scale(.97); }
+.btn.gold { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.btn.gold:hover { background: rgba(201,162,74,0.25); }
+.btn.gold:active { transform: scale(.97); }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.kpi-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  animation: fadeSlideUp .4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.kpi-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+.kpi-card:nth-child(1) { animation-delay: .04s; }
+.kpi-card:nth-child(2) { animation-delay: .08s; }
+.kpi-card:nth-child(3) { animation-delay: .12s; }
+.kpi-card:nth-child(4) { animation-delay: .16s; }
+.kpi-card:nth-child(5) { animation-delay: .20s; }
+.kpi-card:nth-child(6) { animation-delay: .24s; }
+.kpi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.kpi-ic {
+  width: 36px; height: 36px; border-radius: 9px; background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center; color: var(--gold);
+}
+.kpi-ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+.kpi-value { font-size: 28px; font-weight: 700; font-family: var(--mono); letter-spacing: -1px; }
+.kpi-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; font-weight: 500; }
+.kpi-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-family: var(--mono); }
+.badge-ok { background: rgba(61,157,107,0.15); color: var(--ok); }
+.badge-warn { background: rgba(201,162,74,0.15); color: var(--gold); }
+.badge-danger { background: rgba(228,0,43,0.15); color: var(--red); }
+.badge-cyan { background: rgba(0,210,255,0.15); color: var(--cyan); }
+.badge-purple { background: rgba(157,78,221,0.15); color: var(--purple); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+@media(max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.panel-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 24px; position: relative; min-width: 0; overflow: hidden;
+}
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.panel-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.panel-title .tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.06); color: var(--gold); font-weight: 600; }
+
+.chart-wrapper { height: 280px; position: relative; width: 100%; min-width: 0; }
+
+.table-wrapper { width: 100%; overflow-x: auto; border-radius: 10px; border: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 650px; }
+th { background: var(--panel-2); color: var(--text-dim); font-size: 11.5px; font-weight: 600; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 14px 16px; border-bottom: 1px solid var(--line-soft); color: var(--text); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Master Modal Backdrop */
+.auth-modal-backdrop {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.auth-modal-backdrop.active { display: flex; }
+.auth-modal-card {
+  background: var(--panel); border: 1px solid rgba(228,0,43,0.4); border-radius: 18px;
+  width: 460px; max-width: 100%; box-shadow: 0 24px 60px rgba(0,0,0,0.9); overflow: hidden;
+}
+.auth-modal-header {
+  padding: 18px 22px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.auth-modal-title { font-size: 14px; font-weight: 600; color: var(--red); display: flex; align-items: center; gap: 8px; }
+.auth-modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.auth-input {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+  padding: 10px 14px; border-radius: 8px; font-size: 13px; outline: none; width: 100%; font-family: var(--font);
+}
+.auth-input:focus { border-color: var(--gold); }
+
+/* Backdrop Overlay para navegación móvil */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 1040;
+  opacity: 0; transition: opacity .25s ease;
+}
+.sidebar-overlay.active { display: block; opacity: 1; }
+
+.mobile-menu-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
+
+@media (max-width: 850px) {
+  .app { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+  .sidebar {
+    position: sticky; top: 0; z-index: 1100; height: auto; width: 100%; border-right: none;
+    border-bottom: 1px solid var(--line); padding: 12px 16px;
+    flex-direction: row; align-items: center; justify-content: space-between;
+    background: rgba(23, 23, 26, 0.98); backdrop-filter: blur(16px);
+  }
+  .logo-slot { margin-bottom: 0; padding: 0; }
+  .logo-slot .cap { display: block !important; font-size: 9.5px; }
+
+  .mobile-menu-toggle {
+    display: flex !important; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 9px;
+    background: var(--panel-2); border: 1px solid var(--line);
+  }
+
+  .nav {
+    position: absolute; top: 100%; left: 0; width: 100%;
+    background: rgba(23, 23, 26, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.14); box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    padding: 12px 16px; display: none; flex-direction: column; gap: 6px; z-index: 1050;
+    animation: navDropdownFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav.active-mobile-nav { display: flex !important; }
+  @keyframes navDropdownFade { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .nav a { padding: 12px 14px; border-radius: 10px; font-size: 13px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); }
+  .sidebar-foot { display: none !important; }
+
+  .main { padding: 16px 14px 40px; }
+  .topbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .topbar > div:last-child { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .controls-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .filter-group { flex-direction: column; align-items: stretch; width: 100%; }
+  .select-input { width: 100%; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+
+@media (max-width: 500px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .topbar h1 { font-size: 17px; flex-wrap: wrap; }
+  .topbar > div:last-child { flex-direction: column; }
+  .topbar > div:last-child .btn { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-slot">
+      <img src="Recources/LogoCocaCola.png" alt="Coca-Cola Logo" class="official-logo" onerror="this.style.display='none';" />
+      <div class="cap">
+        <strong style="color:var(--text);font-size:10.5px;font-weight:600;display:block;line-height:1.2;">Plataforma de Avisos</strong>
+        <span style="color:var(--gold);font-weight:600;font-size:9.5px;display:block;margin-top:2px;">de Mantenimiento</span>
+      </div>
+    </div>
+
+    <button class="mobile-menu-toggle" id="mobileMenuToggleBtn" aria-label="Abrir menú de navegación">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <nav class="nav">
+      <a href="dashboard-coca-cola.html"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg><span class="label">Resumen</span></a>
+      <a href="avisos.html"><svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 1 5.4-5.4l-3.4 3.4-2-2z"/></svg><span class="label">Avisos</span></a>
+      <a href="ubicaciones.html"><svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="label">Equipos</span></a>
+      <a href="tipos-aviso.html"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 13.5 12 22l-9-9 8.6-8.5H20a1 1 0 0 1 1 1z"/><circle cx="15.5" cy="8.5" r="1.2"/></svg><span class="label">Tipos de aviso</span></a>
+      <a href="alertas.html"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="label">Alertas</span></a>
+      <a href="historial-avisos.html"><svg class="icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg><span class="label">Historial de Avisos</span></a>
+      <a href="estadisticas.html" class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span class="label">Estadísticas</span></a>
+      
+      <div class="nav-sep">Datos & Reportes</div>
+      <a href="dashboard-coca-cola.html#masterOnlySourceBlock"><svg class="icon" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg><span class="label">Excel / SAP</span></a>
+      <a href="#" id="sideSettingsBtn" class="btn-open-settings" style="cursor:pointer;"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="label">Configuración</span></a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sync-chip">
+        <span class="dot"></span>
+        <span class="txt">Analytics Master Activo</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 style="display:flex; align-items:center; gap:10px;">
+          📊 Estadísticas Ejecutivas & Analytics SAP PM
+        </h1>
+        <div class="greet">Indicadores de Disponibilidad (OEE), Tiempos Fallos (MTBF/MTTR), Regla Pareto 80/20 y Análisis por Categorías Especiales</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn gold" id="exportStatsExcelBtn"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Exportar Reporte Excel</button>
+        <button class="btn primary" onclick="window.print()"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir Reporte PDF</button>
+        <button class="btn" id="globalSettingsBtn" title="Configuración del Sistema"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuración</button>
+      </div>
+    </div>
+
+    <!-- CONTROLES Y FILTROS -->
+    <div class="controls-bar">
+      <div class="filter-group">
+        <select class="select-input" id="selectUploadBatch" style="border-color:var(--gold); color:var(--gold); font-weight:600;">
+          <option value="ALL_TIME">Historial Acumulado (Todas las cargas de la planta)</option>
+        </select>
+
+        <button class="btn" id="deleteBatchBtn" title="Borrar este archivo específico del historial de la nube" style="display:none; border-color:rgba(228,0,43,0.5); color:var(--red); padding:7px 12px; font-size:11.5px;">
+          <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Eliminar Archivo Seleccionado
+        </button>
+
+        <select class="select-input" id="filterCategory">
+          <option value="ALL">Todas las Categorías Especiales (MA, SEG, CI, HER, RQ)</option>
+          <option value="MA">🌿 MA - Medio Ambiente</option>
+          <option value="SEG">🛡️ SEG - Seguridad</option>
+          <option value="CI">⚠️ CI - Condición Insegura</option>
+          <option value="HER">🔧 HER - Herramienta</option>
+          <option value="RQ">📋 RQ - Requerimiento</option>
+        </select>
+
+        <select class="select-input" id="filterMonth" style="border-color:rgba(0, 210, 255, 0.4); color:#00D2FF; font-weight:600;">
+          <option value="ALL">Indicador Mensual: Todos los Meses</option>
+        </select>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Filtrar análisis por equipo, aviso o línea..." style="width:280px;">
+      </div>
+    </div>
+
+    <!-- METRICAS EXECUTIVE KPI -->
+    <div class="kpi-grid">
+      <!-- KPI 1: GASTO TOTAL REAL USD -->
+      <div class="kpi-card" style="border-color: rgba(201, 162, 74, 0.45); background: linear-gradient(135deg, rgba(201, 162, 74, 0.12) 0%, rgba(23, 23, 26, 0.95) 100%);">
+        <div class="kpi-top">
+          <div class="kpi-ic" style="color:var(--gold);"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <span class="kpi-badge" style="background:rgba(201,162,74,0.15); color:var(--gold); border:1px solid rgba(201,162,74,0.3);">Inversión Total Ejecutada</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalCost" style="color:var(--gold); font-size:22px;">$0.00</div>
+        <div class="kpi-label" id="kpiTotalCostSub">Gasto real acumulado en OTs</div>
+      </div>
+
+      <!-- KPI 2: BUDGET / PRESUPUESTO ASIGNADO -->
+      <div class="kpi-card" style="border-color: rgba(0, 210, 255, 0.45); background: linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(23, 23, 26, 0.95) 100%);">
+        <div class="kpi-top">
+          <div class="kpi-ic" style="color:var(--cyan);"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+          <span class="kpi-badge badge-cyan" id="kpiBudgetBadge">Budget Asignado</span>
+        </div>
+        <div class="kpi-value" id="kpiBudget" style="color:var(--cyan); font-size:22px;">$56,000.00</div>
+        <div class="kpi-label" id="kpiBudgetSub">Ejecución: 79.2% (En Rango Presupuestario)</div>
+      </div>
+
+      <!-- KPI 3: COSTO PROMEDIO POR INTERVENCIÓN -->
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-ic"><svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 1 5.4-5.4l-3.4 3.4-2-2z"/></svg></div>
+          <span class="kpi-badge badge-warn">Costo Promedio / OT</span>
+        </div>
+        <div class="kpi-value" id="kpiAvgCost">$0.00 USD</div>
+        <div class="kpi-label" id="kpiAvgCostSub">Inversión promedio por aviso procesado</div>
+      </div>
+
+      <!-- KPI 4: MTBF (AVERÍAS ZA) -->
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-ic"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <span class="kpi-badge badge-cyan">MTBF (Averías ZA)</span>
+        </div>
+        <div class="kpi-value" id="kpiMTBF">480 hrs</div>
+        <div class="kpi-label" id="kpiMTBFSub">Tiempo Medio Entre Fallas (Solo Avisos ZA)</div>
+      </div>
+
+      <!-- KPI 5: SLA DE CIERRE -->
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-ic"><svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <span class="kpi-badge badge-purple">SLA de Cierre</span>
+        </div>
+        <div class="kpi-value" id="kpiSLA">89.2%</div>
+        <div class="kpi-label" id="kpiSLASub">Avisos resueltos dentro del objetivo</div>
+      </div>
+
+      <!-- KPI 6: MTTF PROMEDIO -->
+      <div class="kpi-card" style="border-color: rgba(61, 157, 107, 0.4); background: linear-gradient(135deg, rgba(61, 157, 107, 0.1) 0%, rgba(23, 23, 26, 0.95) 100%);">
+        <div class="kpi-top">
+          <div class="kpi-ic" style="color:var(--ok);"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <span class="kpi-badge badge-ok">MTTF Promedio</span>
+        </div>
+        <div class="kpi-value" id="kpiMTTF">0.0 días</div>
+        <div class="kpi-label" id="kpiMTTFSub">=[Fecha de Cierre] - [Creado el]</div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 1 DE GRÁFICOS: TENDENCIA REAL VS BUDGET & PARETO -->
+    <div class="grid-2">
+      <!-- GRÁFICO 1: TENDENCIA MENSUAL DE GASTOS REAL VS BUDGET PROYECTADO -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            📈 Tendencia Mensual: Gasto Real vs Budget Proyectado ($ USD)
+            <span class="tag" id="tagBudgetMeta">Enero - Agosto 2026</span>
+          </div>
+          <button class="btn" id="btnOpenBudgetModal" style="padding:4px 10px; font-size:11px; border-color:rgba(201,162,74,0.4); color:var(--gold); background:rgba(201,162,74,0.08);">
+            ⚙️ Configurar Budget Mensual
+          </button>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="monthlyBudgetTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- GRÁFICO 2: PARETO 80/20 -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            Análisis de Pareto (Regla 80/20 de Equipos Críticos)
+            <span class="tag">Densidad de Paradas con IA</span>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="paretoChart"></canvas>
+        </div>
+        <div id="paretoAiInsightBox" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2 DE GRÁFICOS: INVERSIÓN POR ÁREA & CATEGORÍAS ESPECIALES -->
+    <div class="grid-2">
+      <!-- GRÁFICO INVERSIÓN POR ÁREA -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            Inversión y Gasto de Mantenimiento por Área ($ USD)
+            <span class="tag">Jarabe · CIP · Envasado</span>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="lineTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- GRÁFICO CATEGORÍAS ESPECIALES -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            Distribución por Categorías Especiales (MA / SEG / CI / HER / RQ)
+            <span class="tag">SAP PM Extraído</span>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: CONFIABILIDAD MTBF & ANÁLISIS FALLA-A-FALLA (AVISOS ZA) -->
+    <div class="panel-box" style="margin-bottom:24px;">
+      <div class="panel-head">
+        <div class="panel-title">
+          ⏱️ Análisis de Confiabilidad MTBF & Intervalos Falla-a-Falla (Avisos de Parada ZA)
+          <span class="tag" id="tagZATotalCount">9 Averías ZA Registradas</span>
+        </div>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:14px; line-height:1.45;">
+        Cálculo del <strong>Tiempo Medio Entre Fallas (MTBF)</strong> basado estrictamente en las paradas no programadas (Clase <strong>ZA</strong>). Analiza el tiempo transcurrido entre eventos de falla consecutivos y proyecta la confiabilidad operativa de cada máquina en planta.
+      </div>
+
+      <div class="grid-2">
+        <!-- GRÁFICO CRONOLÓGICO DE INTERVALOS ENTRE PARADAS ZA -->
+        <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius); padding:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--gold); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <span>📈 Intervalo de Horas / Días Entre Paradas ZA Consecutivas</span>
+            <span id="mtbfIntervalGlobalTxt" style="color:var(--cyan); font-family:var(--mono); font-size:11.5px;">Promedio: ~480h</span>
+          </div>
+          <div class="chart-wrapper" style="height:220px;">
+            <canvas id="mtbfTimelineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- MATRIZ DE CONFIABILIDAD POR MÁQUINA (PRONÓSTICO & TIEMPO SIN FALLAS) -->
+        <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius); padding:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--cyan); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span>🛡️ MTBF y Estado Operativo por Máquina con Falla ZA</span>
+            <span style="font-size:10.5px; color:var(--text-dim);">Tasa de Falla / Diagnóstico</span>
+          </div>
+          <div id="equiposReliabilityList" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+            <!-- Tarjetas dinámicas generadas por equipo -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA EJECUTIVA DE Equipos & Autores -->
+    <div class="panel-box">
+      <div class="panel-head">
+        <div class="panel-title">
+          Ranking Ejecutivo de Equipos con Mayor Reincidencia
+          <span class="tag" id="rankingTagCount">0 equipos analizados</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Equipo / Ubicación por Equipo</th>
+              <th>Total Avisos</th>
+              <th>Averías ZA (Paradas)</th>
+              <th>MTBF Máquina</th>
+              <th>Avisos Abiertos</th>
+              <th>Gasto Total (USD)</th>
+              <th>Categoría Predominante</th>
+              <th>Índice de Riesgo</th>
+            </tr>
+          </thead>
+          <tbody id="rankingTableBody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-dim); padding:30px;">Cargando análisis estadístico ejecutivos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL PROTECCIÓN MASTER EN CASO DE ROL OPERADOR -->
+<div class="auth-modal-backdrop" id="masterAuthLockModal">
+  <div class="auth-modal-card">
+    <div class="auth-modal-header">
+      <div class="auth-modal-title">
+        <svg class="icon" viewBox="0 0 24 24" style="color:var(--red);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        🔐 Módulo de Estadísticas Restringido a Master
+      </div>
+    </div>
+    <div class="auth-modal-body">
+      <div style="font-size:12.5px; color:var(--text); line-height:1.5;">
+        El panel de <strong>Estadísticas Ejecutivas & Analytics</strong> contiene información estratégica reservada para el <strong>Usuario Master (ID: sv001437)</strong>.
+      </div>
+      <div>
+        <label style="font-size:10.5px; color:var(--text-faint); font-family:var(--mono); display:block; margin-bottom:4px;">INGRESE CONTRASEÑA MASTER PARA ACCEDER:</label>
+        <input type="password" class="auth-input" id="inputMasterLockPass" placeholder="Ingrese contraseña master" />
+      </div>
+      <button class="btn primary" id="btnUnlockMasterStats" style="width:100%; justify-content:center; padding:10px; font-size:13px; font-weight:600;">
+        Verificar e Ingresar al Módulo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIGURACIÓN DE BUDGET / PRESUPUESTOS MENSUALES -->
+<div class="auth-modal-backdrop" id="budgetConfigModal">
+  <div class="auth-modal-card" style="max-width:560px;">
+    <div class="auth-modal-header">
+      <div class="auth-modal-title" style="color:var(--gold);">
+        <svg class="icon" viewBox="0 0 24 24" style="color:var(--gold);"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        ⚙️ Configurar Presupuesto Mensual (Budget USD)
+      </div>
+      <button class="modal-close" id="btnCloseBudgetModal" style="background:transparent; border:none; color:var(--text-dim); font-size:22px; cursor:pointer; padding:0 6px;">&times;</button>
+    </div>
+    <div class="auth-modal-body">
+      <div style="font-size:12px; color:var(--text-dim); line-height:1.4;">
+        Establezca los montos del <strong>Budget Mensual ($ USD)</strong> para comparar contra la inversión real ejecutada en órdenes de trabajo (OTs) y proyectar la tendencia financiera.
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-top:10px; max-height:280px; overflow-y:auto; padding-right:6px;" id="budgetInputsGrid">
+        <!-- Inputs dinámicos por mes -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+        <div style="font-size:11.5px; color:var(--text-dim);">
+          Total Budget Anual: <strong id="modalBudgetTotalTxt" style="color:var(--cyan); font-family:var(--mono);">$56,000.00 USD</strong>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="btnResetBudgetDefaults" style="font-size:11.5px; padding:7px 12px;">Restablecer</button>
+          <button class="btn gold" id="btnSaveBudgetConfig" style="font-size:11.5px; padding:7px 14px; font-weight:700;">Guardar Budget</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentStatsRows = [];
+let allBatchesMap = {};
+let allHistoricalNotices = [];
+
+function getActiveUser() {
+  const saved = sessionStorage.getItem('cocacola_active_user') || localStorage.getItem('cocacola_active_user');
+  if (saved) {
+    try { return JSON.parse(saved); } catch(e){}
+  }
+  return null;
+}
+
+function checkMasterAuth() {
+  // Módulo accesible para todos los roles de usuario (Operador y Master)
+}
+
+document.getElementById('btnUnlockMasterStats')?.addEventListener('click', () => {
+  const pass = document.getElementById('inputMasterLockPass')?.value;
+  if (pass === 'master123' || pass === 'sv001437') {
+    const userObj = { role: 'MASTER', id: 'sv001437', name: 'Master: sv001437' };
+    sessionStorage.setItem('cocacola_active_user', JSON.stringify(userObj));
+    localStorage.setItem('cocacola_active_user', JSON.stringify(userObj));
+    document.getElementById('masterAuthLockModal')?.classList.remove('active');
+    loadStatsData();
+  } else {
+    alert('❌ Contraseña Master incorrecta. Ingrese master123');
+  }
+});
+
+function withTimeout(promise, ms = 1000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de red')), ms))
+  ]);
+}
+
+function extractNoticeCategory(descStr) {
+  if (!descStr) return { code: 'GEN', label: 'GENERAL', fullLabel: 'GENERAL / OPERATIVO', icon: '⚙️', color: '#8B8990', bg: 'rgba(139,137,144,0.12)', border: 'rgba(139,137,144,0.3)', cleanDesc: '—' };
+
+  const raw = String(descStr).trim();
+  const upper = raw.toUpperCase();
+
+  let code = 'GEN';
+  let label = 'GENERAL';
+  let fullLabel = 'MANTENIMIENTO GENERAL';
+  let icon = '⚙️';
+  let color = '#8B8990';
+  let bg = 'rgba(139,137,144,0.12)';
+  let border = 'rgba(139,137,144,0.3)';
+  let cleanDesc = raw;
+
+  if (raw.includes('|')) {
+    const parts = raw.split('|');
+    const prefix = parts[0].trim().toUpperCase();
+    cleanDesc = parts.slice(1).join('|').trim();
+
+    if (prefix === 'MA' || prefix.includes('MEDIO') || prefix.includes('AMBIENTE')) {
+      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+    } else if (prefix === 'SEG' || prefix.includes('SEGURID')) {
+      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+    } else if (prefix === 'CI' || prefix.includes('INSEGURA')) {
+      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+    } else if (prefix === 'HER' || prefix.includes('HERRAMIENT')) {
+      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+    } else if (prefix === 'RQ' || prefix.includes('REQUERIMIEN')) {
+      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    }
+  } else {
+    if (/^(MA[:\s-]|MEDIO\s+AMBIENTE)/i.test(upper) || upper.includes('MEDIO AMBIENTE')) {
+      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+    } else if (/^(SEG[:\s-]|SEGURIDAD)/i.test(upper) || upper.includes('SEGURIDAD')) {
+      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+    } else if (/^(CI[:\s-]|CONDICION\s+INSEGURA|CONDICIÓN\s+INSEGURA)/i.test(upper) || upper.includes('CONDICION INSEGURA') || upper.includes('CONDICIÓN INSEGURA')) {
+      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+    } else if (/^(HER[:\s-]|HERRAMIENTA)/i.test(upper) || upper.includes('HERRAMIENTA')) {
+      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+    } else if (/^(RQ[:\s-]|REQUERIMIENTO)/i.test(upper) || upper.includes('REQUERIMIENTO')) {
+      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    }
+  }
+
+  return { code, label, fullLabel, icon, color, bg, border, cleanDesc };
+}
+
+function parseSAPDate(dateStr) {
+  if (!dateStr || dateStr === '—') return null;
+  const s = String(dateStr).trim();
+  if (!s || s === '00.00.0000' || s === '00/00/0000') return null;
+
+  // 1. Manejo de número serial de Excel (ej: 45440)
+  if (/^\d{5}(\.\d+)?$/.test(s)) {
+    const serial = parseFloat(s);
+    const utcValue = Math.floor(serial - 25569) * 86400 * 1000;
+    const dSerial = new Date(utcValue);
+    if (!isNaN(dSerial.getTime()) && dSerial.getFullYear() > 1990 && dSerial.getFullYear() < 2100) {
+      return dSerial;
+    }
+  }
+
+  // 2. Formato YYYY-MM-DD
+  const matchYMD = s.match(/^(\d{4})[\./-](\d{1,2})[\./-](\d{1,2})/);
+  if (matchYMD) {
+    const year = parseInt(matchYMD[1], 10);
+    const month = parseInt(matchYMD[2], 10) - 1;
+    const day = parseInt(matchYMD[3], 10);
+    if (year > 1990 && year < 2100 && month >= 0 && month < 12 && day >= 1 && day <= 31) {
+      return new Date(year, month, day);
+    }
+  }
+
+  // 3. Formato MM/DD/YYYY o DD/MM/YYYY con adaptación para formato Mes/Día/Año
+  const matchParts = s.match(/^(\d{1,2})[\./-](\d{1,2})[\./-](\d{2,4})/);
+  if (matchParts) {
+    const p1 = parseInt(matchParts[1], 10);
+    const p2 = parseInt(matchParts[2], 10);
+    let year = parseInt(matchParts[3], 10);
+    if (year < 100) year += 2000;
+
+    let month, day;
+
+    if (p1 > 12) {
+      // p1 es el Día (ej: 28/07/2026 -> Día 28, Mes 7)
+      day = p1;
+      month = p2 - 1;
+    } else if (p2 > 12) {
+      // p2 es el Día (ej: 07/28/2026 -> Mes 7, Día 28)
+      month = p1 - 1;
+      day = p2;
+    } else {
+      // Ambos <= 12 (ej: 08/11/2026 en MM/DD/YYYY -> Mes 08 = Agosto, Día 11)
+      month = p1 - 1;
+      day = p2;
+    }
+
+    if (year > 1990 && year < 2100 && month >= 0 && month < 12 && day >= 1 && day <= 31) {
+      return new Date(year, month, day);
+    }
+  }
+
+  return null;
+}
+
+function parseCSVText(text) {
+  if (!text || typeof text !== 'string') return [];
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  let delim = ';';
+  const sample = lines.slice(0, 5).join('\n');
+  if (sample.includes(';')) delim = ';';
+  else if (sample.includes('\t')) delim = '\t';
+  else if (sample.includes(',')) delim = ',';
+
+  let headerIndex = 0;
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const cols = lines[i].split(delim).map(c => c.toLowerCase().trim());
+    if (cols.some(c => c.includes('aviso') || c.includes('notif') || c.includes('descrip') || c.includes('ubicac') || c.includes('status'))) {
+      headerIndex = i;
+      break;
+    }
+  }
+
+  const headers = lines[headerIndex].split(delim).map(h => h.trim().replace(/^["']|["']$/g, ''));
+  
+  const iAviso  = headers.findIndex(h => { const l = h.toLowerCase(); return (l.includes('aviso') || l.includes('notif') || l.includes('n.º') || l.includes('n°') || l.includes('id')) && !l.includes('clase') && !l.includes('fecha') && !l.includes('autor') && !l.includes('tipo'); });
+  let iDesc   = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('descrip') || l.includes('texto') || l.includes('titulo'); });
+  if (iDesc < 0) {
+    iDesc = headers.findIndex(h => h.toLowerCase().includes('denominac'));
+  }
+  const iClase  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('clase') || l.includes('tipo') || l.includes('cat'); });
+  const iEquipo = headers.findIndex(h => { const l = h.toLowerCase(); return l === 'equipo' || l.includes('nº equipo') || l.includes('cod equipo'); });
+  const iDenom  = headers.findIndex((h, idx) => idx !== iDesc && h.toLowerCase().includes('denominac'));
+  const iUbic   = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('ubicac') || l.includes('tecnic') || l.includes('técnic'); });
+  const iCierre = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('cierre') || l.includes('resol') || l.includes('fin'); });
+  const iStatus = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('status') || l.includes('estado') || l.includes('est'); });
+  const iCreado = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('cread') || l.includes('fecha'); });
+  const iAutor  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('autor') || l.includes('notificad') || l.includes('user') || l.includes('usuario'); });
+  const iOrden  = headers.findIndex(h => { const l = h.toLowerCase(); return (l.includes('orden') || l.includes('ot') || l.includes('order')) && !l.includes('clase'); });
+  const iCosto  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('costo') || l.includes('importe') || l.includes('gasto') || l.includes('monto') || l.includes('valor'); });
+  const iMoneda = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('moneda') || l.includes('currency'); });
+
+  const idxAviso  = iAviso >= 0 ? iAviso : (headers.length > 7 ? 7 : 0);
+  const idxDesc   = iDesc >= 0 ? iDesc : (headers.length > 10 ? 10 : 1);
+  const idxClase  = iClase >= 0 ? iClase : 0;
+  const idxEquipo = iEquipo >= 0 ? iEquipo : 3;
+  const idxDenom  = iDenom >= 0 ? iDenom : 2;
+  const idxUbic   = iUbic >= 0 ? iUbic : 1;
+  const idxStatus = iStatus >= 0 ? iStatus : (headers.length > 12 ? 12 : 4);
+  const idxCreado = iCreado >= 0 ? iCreado : 5;
+  const idxAutor  = iAutor >= 0 ? iAutor : (headers.length > 9 ? 9 : 6);
+  const idxCierre = iCierre >= 0 ? iCierre : (headers.length > 13 ? 13 : 7);
+  const idxOrden  = iOrden >= 0 ? iOrden : (headers.length > 8 ? 8 : -1);
+  const idxCosto  = iCosto >= 0 ? iCosto : (headers.length > 14 ? 14 : -1);
+  const idxMoneda = iMoneda >= 0 ? iMoneda : (headers.length > 15 ? 15 : -1);
+
+  // Mapeo de subtabla de costos si existe
+  const orderCostMap = new Map();
+  if (headers.length >= 17) {
+    let costOrdIdx = -1, costValIdx = -1;
+    headers.forEach((h, idx) => {
+      const l = h.toLowerCase();
+      if (idx >= 14 && (l.includes('orden') || l.includes('ot'))) costOrdIdx = idx;
+      if (idx >= 14 && (l.includes('importe') || l.includes('costo') || l.includes('gasto') || l.includes('monto'))) costValIdx = idx;
+    });
+
+    if (costOrdIdx >= 0 && costValIdx >= 0) {
+      lines.slice(headerIndex + 1).forEach(line => {
+        const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
+        const ord = (cols[costOrdIdx] || '').trim();
+        const rawCost = parseFloat((cols[costValIdx] || '0').replace(/,/g, ''));
+        if (ord && !isNaN(rawCost)) {
+          orderCostMap.set(ord, (orderCostMap.get(ord) || 0) + rawCost);
+        }
+      });
+    }
+  }
+
+  return lines.slice(headerIndex + 1).map(line => {
+    const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
+    const valAviso = (cols[idxAviso] || cols[0] || '').trim();
+    if (!valAviso || valAviso === '—' || valAviso.toLowerCase().includes('aviso') || valAviso.toLowerCase().includes('n.º')) return null;
+
+    const eqVal = (cols[idxEquipo] || '').trim();
+    let denomEq = '';
+    if (idxEquipo >= 0 && cols[idxEquipo + 1] && idxEquipo + 1 !== idxDesc) {
+      denomEq = (cols[idxEquipo + 1] || '').trim();
+    }
+    if (!denomEq || denomEq === '—') {
+      denomEq = (cols[idxDenom] || '').trim();
+    }
+    const ubicVal = (cols[idxUbic] || '').trim();
+    let denomUbic = (cols[2] || '').trim();
+    if (!denomUbic || denomUbic === denomEq) denomUbic = ubicVal;
+
+    let equipoUbicStr = '—';
+    if (eqVal && eqVal !== '—') {
+      if (denomEq && denomEq !== '—' && denomEq !== eqVal) {
+        equipoUbicStr = `${eqVal} · ${denomEq}`;
+      } else {
+        equipoUbicStr = `${eqVal} (${ubicVal || 'Planta'})`;
+      }
+    } else if (denomEq && denomEq !== '—') {
+      equipoUbicStr = denomEq;
+    } else if (ubicVal && ubicVal !== '—') {
+      equipoUbicStr = ubicVal;
+    }
+
+    const valCierre = idxCierre >= 0 ? (cols[idxCierre] || '').trim() : '';
+    const valOrden  = idxOrden >= 0 ? (cols[idxOrden] || '—').trim() || '—' : '—';
+
+    let valCosto = 0.0;
+    if (idxCosto >= 0 && cols[idxCosto]) {
+      const parsedNum = parseFloat(cols[idxCosto].replace(/,/g, ''));
+      if (!isNaN(parsedNum)) valCosto = parsedNum;
+    } else if (valOrden && orderCostMap.has(valOrden)) {
+      valCosto = orderCostMap.get(valOrden);
+    }
+
+    const valMoneda = idxMoneda >= 0 && cols[idxMoneda] ? cols[idxMoneda].trim() : 'USD';
+
+    return [
+      valAviso,
+      (cols[idxDesc] || '—').trim() || '—',
+      (cols[idxClase] || 'ZA').trim() || 'ZA',
+      equipoUbicStr,
+      (cols[idxStatus] || 'MEAB').trim() || 'MEAB',
+      (cols[idxCreado] || '—').trim() || '—',
+      (cols[idxAutor] || '—').trim() || '—',
+      valCierre,
+      valOrden,
+      ubicVal,
+      denomUbic,
+      eqVal,
+      denomEq,
+      valCosto,
+      valMoneda
+    ];
+  }).filter(Boolean);
+}
+
+async function loadStatsData() {
+  let loadedFromCloud = false;
+  currentStatsRows = [];
+  allHistoricalNotices = [];
+  allBatchesMap = {};
+
+  try {
+    if (typeof _fbDb !== 'undefined') {
+      // 0. Verificar si la planta está en estado vacante (0 avisos / isEmpty)
+      const activeSnap = await withTimeout(_fbDb.collection('plant_data').doc('active_csv').get(), 2000);
+      if (activeSnap && activeSnap.exists && activeSnap.data().isEmpty) {
+        loadedFromCloud = true;
+        currentStatsRows = [];
+        allHistoricalNotices = [];
+        allBatchesMap = {};
+        const batchSelect = document.getElementById('selectUploadBatch');
+        if (batchSelect) batchSelect.innerHTML = '<option value="ALL_TIME">📜 Todo el Historial Acumulado (0 cargas)</option>';
+        renderStatsView();
+        return;
+      }
+
+      // 1. Cargar lotes de upload_history si existen
+      const historySnap = await withTimeout(_fbDb.collection('upload_history').orderBy('uploadTimestamp', 'desc').get(), 3000);
+      if (historySnap && !historySnap.empty) {
+        allBatchesMap = {};
+        const batchOptions = ['<option value="ALL_TIME">📜 Todo el Historial Acumulado (Todas las cargas de la planta)</option>'];
+
+        historySnap.forEach(doc => {
+          const data = doc.data();
+          const batchId = data.batchId || doc.id;
+          const dt = data.uploadTimestamp ? new Date(data.uploadTimestamp) : new Date();
+          const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          let parsedRows = [];
+          if (data.csvText) parsedRows = parseCSVText(data.csvText);
+
+          allBatchesMap[batchId] = {
+            batchId, fileName: data.fileName || 'Archivo_SAP.csv',
+            uploadTimestamp: data.uploadTimestamp || Date.now(),
+            rowsCount: data.rowsCount || parsedRows.length, rows: parsedRows
+          };
+          batchOptions.push(`<option value="${batchId}">📁 ${data.fileName || 'Archivo SAP'} — ${dtStr} (${parsedRows.length} avisos)</option>`);
+        });
+
+        const mergedHistMap = new Map();
+        Object.values(allBatchesMap).forEach(b => {
+          b.rows.forEach(r => {
+            if (r && r[0]) {
+              const id = String(r[0]).trim();
+              if (!mergedHistMap.has(id)) {
+                mergedHistMap.set(id, r);
+              }
+            }
+          });
+        });
+
+        allHistoricalNotices = Array.from(mergedHistMap.values());
+        if (allHistoricalNotices.length > 0) {
+          currentStatsRows = allHistoricalNotices;
+          loadedFromCloud = true;
+        }
+      }
+
+      // 2. Si upload_history estaba vacío, intentar cargar desde plant_data/active_csv
+      if (!loadedFromCloud && activeSnap && activeSnap.exists) {
+        const dData = activeSnap.data();
+        if (dData && dData.csvText && !dData.isEmpty) {
+          currentStatsRows = parseCSVText(dData.csvText);
+          allHistoricalNotices = currentStatsRows;
+          if (currentStatsRows.length > 0) loadedFromCloud = true;
+        }
+      }
+    }
+  } catch(e){}
+
+  // 3. Fallback LocalStorage
+  if (!loadedFromCloud || currentStatsRows.length === 0) {
+    let rawText = '';
+    try {
+      const localCsv = localStorage.getItem('cocacola_active_csv');
+      if (localCsv && localCsv.trim().length > 0) rawText = localCsv;
+    } catch(e){}
+
+    if (rawText) {
+      currentStatsRows = parseCSVText(rawText);
+      allHistoricalNotices = currentStatsRows;
+      if (currentStatsRows.length > 0) loadedFromCloud = true;
+    }
+  }
+
+  // 4. Fallback DBMANTTO.csv
+  if (!loadedFromCloud || currentStatsRows.length === 0) {
+    try {
+      const res = await fetch('DBMANTTO.csv?t=' + Date.now());
+      if (res.ok) {
+        const rawText = await res.text();
+        if (rawText) {
+          currentStatsRows = parseCSVText(rawText);
+          allHistoricalNotices = currentStatsRows;
+          if (currentStatsRows.length > 0) loadedFromCloud = true;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 5. Fallback Dataset Embebido Centralizado (plant-data-source.js)
+  if (!loadedFromCloud || currentStatsRows.length === 0) {
+    if (typeof window.DEFAULT_EMBEDDED_CSV === 'string' && window.DEFAULT_EMBEDDED_CSV.length > 0) {
+      try {
+        currentStatsRows = parseCSVText(window.DEFAULT_EMBEDDED_CSV);
+        allHistoricalNotices = currentStatsRows;
+      } catch(e) {}
+    }
+  }
+
+  const batchSelect = document.getElementById('selectUploadBatch');
+  if (batchSelect && (!batchSelect.options || batchSelect.options.length <= 1)) {
+    batchSelect.innerHTML = `<option value="ALL_TIME">📜 Historial Activo de Planta (${currentStatsRows.length} avisos)</option>`;
+  }
+
+  populateMonthDropdown(allHistoricalNotices.length > 0 ? allHistoricalNotices : currentStatsRows);
+  renderStatsView();
+}
+
+function populateMonthDropdown(rows) {
+  const fMonth = document.getElementById('filterMonth');
+  if (!fMonth) return;
+
+  const currentVal = fMonth.value;
+  const monthMap = {};
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  rows.forEach(r => {
+    const dt = parseSAPDate(r[5]);
+    if (dt) {
+      const year = dt.getFullYear();
+      const mIdx = dt.getMonth();
+      const key = `${year}-${String(mIdx + 1).padStart(2, '0')}`;
+      const label = `${monthNames[mIdx]} ${year}`;
+      monthMap[key] = label;
+    }
+  });
+
+  const sortedKeys = Object.keys(monthMap).sort().reverse();
+  const options = ['<option value="ALL">📅 Indicador Mensual: Todos los Meses (Acumulado)</option>'];
+
+  sortedKeys.forEach(k => {
+    options.push(`<option value="${k}">📅 Indicador Mensual: ${monthMap[k]}</option>`);
+  });
+
+  fMonth.innerHTML = options.join('');
+  if (sortedKeys.includes(currentVal)) {
+    fMonth.value = currentVal;
+  }
+}
+
+function renderStatsView() {
+  const catFilter = document.getElementById('filterCategory').value;
+  const monthSelect = document.getElementById('filterMonth');
+  const monthFilter = monthSelect ? monthSelect.value : 'ALL';
+  const searchQ = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  let filtered = currentStatsRows.filter(r => {
+    if (monthFilter !== 'ALL') {
+      const dt = parseSAPDate(r[5]);
+      if (!dt) return false; // Excluir si no tiene fecha válida de creación
+      const k = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+      if (k !== monthFilter) return false;
+    }
+    if (catFilter !== 'ALL') {
+      const cat = extractNoticeCategory(r[1]);
+      if (cat.code !== catFilter) return false;
+    }
+    if (searchQ) {
+      const match = r.some(col => String(col).toLowerCase().includes(searchQ));
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const total = filtered.length;
+  const cerrados = filtered.filter(r => String(r[4] || '').includes('MECE') || String(r[4] || '').toLowerCase().includes('cerr')).length;
+  const abiertos = total - cerrados;
+
+  // 1. SLA (Cumplimiento de Cierres)
+  const slaPct = total > 0 ? ((cerrados / total) * 100).toFixed(1) + '%' : '0.0%';
+
+  // Variables para cálculos reales de MTTF, MTTR, MTBF y OEE
+  let mttfVal = '0.0 días (0.0 hrs)';
+  let mttrVal = '0.0 hrs';
+  let mtbfVal = '0 hrs';
+  let oeeVal = '0.0%';
+  let countAveriasZA = 0;
+  let windowHrs = 720;
+
+  if (total > 0) {
+    let countClosedWithDates = 0;
+    let totalMttfDiffMs = 0;
+    let countMttrClosed = 0;
+    let totalMttrDiffMs = 0;
+    let totalDowntimeMs = 0;
+    const nowMs = Date.now();
+
+    filtered.forEach(r => {
+      const dtCreado = parseSAPDate(r[5]);
+      const dtCierre = parseSAPDate(r[7]);
+      const clase = String(r[2] || '').toUpperCase();
+      const isClosed = String(r[4] || '').includes('MECE') || String(r[4] || '').toLowerCase().includes('cerr');
+
+      // MTBF: Solo considera avisos de avería / parada no programada tipo ZA
+      if (clase.includes('ZA')) {
+        countAveriasZA++;
+      }
+
+      // Cálculo de tiempo de parada para OEE (Avisos de Parada de Equipo ZA)
+      if (clase.includes('ZA')) {
+        if (dtCierre && dtCreado) {
+          const diffMs = dtCierre.getTime() - dtCreado.getTime();
+          if (diffMs > 0 && diffMs <= 180 * 86400 * 1000) {
+            totalDowntimeMs += diffMs;
+          }
+        } else if (dtCreado && !isClosed) {
+          const activeMs = Math.max(0, nowMs - dtCreado.getTime());
+          totalDowntimeMs += Math.min(activeMs, 30 * 86400 * 1000);
+        }
+      }
+
+      if (dtCreado && dtCierre) {
+        const diffMs = dtCierre.getTime() - dtCreado.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (diffDays >= 0 && diffDays <= 180) {
+          totalMttfDiffMs += diffMs;
+          countClosedWithDates++;
+
+          if (clase.includes('ZA') || clase.includes('ZM')) {
+            totalMttrDiffMs += diffMs;
+            countMttrClosed++;
+          }
+        }
+      }
+    });
+
+    // 2. MTTF Promedio (Tiempo Medio de Operación hasta Cierre)
+    if (countClosedWithDates > 0) {
+      const avgMs = totalMttfDiffMs / countClosedWithDates;
+      const avgDays = (avgMs / (1000 * 60 * 60 * 24)).toFixed(1);
+      const avgHrs = (avgMs / (1000 * 60 * 60)).toFixed(1);
+      mttfVal = `${avgDays} días (${avgHrs} hrs)`;
+    } else {
+      mttfVal = 'Sin cierres en período';
+    }
+
+    // 3. MTTR (Tiempo Medio de Reparación de Averías ZA/ZM)
+    if (countMttrClosed > 0) {
+      const avgMttrHrs = (totalMttrDiffMs / countMttrClosed / (1000 * 60 * 60)).toFixed(1);
+      mttrVal = `${avgMttrHrs} hrs`;
+    } else if (countAveriasZA > 0) {
+      mttrVal = 'En proceso';
+    } else {
+      mttrVal = '0.0 hrs';
+    }
+
+    // 4. MTBF y OEE: Ventana Operativa de Planta (720 hrs por mes por equipo)
+    const monthsSet = new Set();
+    const equipsSet = new Set();
+    filtered.forEach(r => {
+      const dt = parseSAPDate(r[5]);
+      if (dt) {
+        monthsSet.add(`${dt.getFullYear()}-${dt.getMonth()}`);
+      }
+      if (r[3] && r[3] !== '—') {
+        equipsSet.add(r[3]);
+      }
+    });
+
+    const monthCount = Math.max(1, monthsSet.size);
+    const equipCount = Math.max(1, equipsSet.size);
+    windowHrs = monthCount * 720;
+    const totalCapacityHrs = windowHrs * equipCount;
+
+    // MTBF exclusivo para fallas/averías ZA
+    if (countAveriasZA > 0) {
+      mtbfVal = `${Math.round(windowHrs / countAveriasZA)} hrs`;
+    } else {
+      mtbfVal = `${windowHrs} hrs (Sin fallas ZA)`;
+    }
+  }
+
+  // 6. Finanzas & Presupuesto (Budget vs Real)
+  const totalCost = filtered.reduce((acc, r) => {
+    const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+    return acc + c;
+  }, 0);
+  const avgCostPerAviso = total > 0 ? (totalCost / total) : 0;
+  const countWithCost = filtered.filter(r => (typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, ''))) > 0).length;
+
+  const budgets = getMonthlyBudgets();
+  const totalBudget8Months = Object.keys(budgets).slice(0, 8).reduce((sum, k) => sum + (budgets[k] || 7000), 0);
+  const budgetExecutionPct = totalBudget8Months > 0 ? ((totalCost / totalBudget8Months) * 100).toFixed(1) : '0.0';
+  const budgetDiff = totalBudget8Months - totalCost;
+
+  const kpiTotalCost = document.getElementById('kpiTotalCost');
+  const kpiTotalCostSub = document.getElementById('kpiTotalCostSub');
+  if (kpiTotalCost) {
+    kpiTotalCost.textContent = `$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (kpiTotalCostSub) {
+    kpiTotalCostSub.textContent = `Acumulado en ${countWithCost} OTs con costo directo`;
+  }
+
+  const kpiBudget = document.getElementById('kpiBudget');
+  const kpiBudgetSub = document.getElementById('kpiBudgetSub');
+  const kpiBudgetBadge = document.getElementById('kpiBudgetBadge');
+  if (kpiBudget) {
+    kpiBudget.textContent = `$${totalBudget8Months.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (kpiBudgetSub) {
+    kpiBudgetSub.textContent = budgetDiff >= 0
+      ? `Ejecución: ${budgetExecutionPct}% (Ahorro: +$${budgetDiff.toLocaleString('en-US', {minimumFractionDigits:2})} USD)`
+      : `Ejecución: ${budgetExecutionPct}% (Excedente: -$${Math.abs(budgetDiff).toLocaleString('en-US', {minimumFractionDigits:2})} USD)`;
+  }
+  if (kpiBudgetBadge) {
+    kpiBudgetBadge.textContent = budgetDiff >= 0 ? 'En Rango Presupuestario' : 'Desviación Presupuesto';
+    kpiBudgetBadge.className = budgetDiff >= 0 ? 'kpi-badge badge-ok' : 'kpi-badge badge-warn';
+  }
+
+  const kpiAvgCost = document.getElementById('kpiAvgCost');
+  const kpiAvgCostSub = document.getElementById('kpiAvgCostSub');
+  if (kpiAvgCost) {
+    kpiAvgCost.textContent = `$${avgCostPerAviso.toFixed(2)} USD`;
+  }
+  if (kpiAvgCostSub) {
+    kpiAvgCostSub.textContent = `Promedio por intervención ejecutada`;
+  }
+
+  const kpiMTBF = document.getElementById('kpiMTBF');
+  if (kpiMTBF) kpiMTBF.textContent = mtbfVal;
+
+  const kpiMTBFSub = document.getElementById('kpiMTBFSub');
+  if (kpiMTBFSub) {
+    if (countAveriasZA > 0) {
+      const mtbfDays = (Math.round(windowHrs / countAveriasZA) / 24).toFixed(1);
+      kpiMTBFSub.textContent = `Intervalo real: ~${mtbfDays}d entre paradas (${countAveriasZA} averías ZA)`;
+    } else {
+      kpiMTBFSub.textContent = `0 paradas ZA en período seleccionado`;
+    }
+  }
+
+  const kpiSLA = document.getElementById('kpiSLA');
+  if (kpiSLA) kpiSLA.textContent = slaPct;
+
+  if (document.getElementById('kpiMTTF')) {
+    document.getElementById('kpiMTTF').textContent = mttfVal;
+  }
+
+  const selectedMonthText = (monthSelect && monthSelect.value !== 'ALL' && monthSelect.options[monthSelect.selectedIndex]) 
+    ? monthSelect.options[monthSelect.selectedIndex].text.replace('📅 Indicador Mensual: ', '') 
+    : 'Acumulado';
+  if (document.getElementById('kpiMTTFSub')) {
+    document.getElementById('kpiMTTFSub').textContent = `=[Fecha Cierre] - [Creado] · (${selectedMonthText})`;
+  }
+
+  // Render Charts, Reliability & Table
+  renderMonthlyBudgetTrendChart(filtered);
+  renderParetoChart(filtered);
+  renderCategoryChart(filtered);
+  renderLineTrendChart(filtered);
+  renderMTBFReliabilitySection(filtered);
+  renderRankingTable(filtered, totalCost);
+}
+
+let paretoChartInstance = null;
+function renderParetoChart(rows) {
+  const ctx = document.getElementById('paretoChart');
+  const aiInsightEl = document.getElementById('paretoAiInsightBox');
+  if (!ctx) return;
+
+  if (!rows || rows.length === 0) {
+    if (paretoChartInstance) {
+      paretoChartInstance.data.labels = [];
+      paretoChartInstance.data.datasets[0].data = [];
+      paretoChartInstance.data.datasets[1].data = [];
+      paretoChartInstance.update();
+    }
+    if (aiInsightEl) {
+      aiInsightEl.innerHTML = `
+        <div style="font-size:12px; color:var(--text-dim); padding:10px 14px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--line);">
+          🤖 <strong>Diagnóstico IA Pareto:</strong> No hay datos activos de planta. Suba un archivo para generar el análisis 80/20.
+        </div>`;
+    }
+    return;
+  }
+
+  const ubicMap = {};
+  const globalTotalNotices = rows.length;
+
+  rows.forEach(r => {
+    const u = (r[3] && r[3] !== '—') ? r[3] : 'Sin Equipo';
+    ubicMap[u] = (ubicMap[u] || 0) + 1;
+  });
+
+  const sorted = Object.entries(ubicMap).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  const labels = sorted.map(s => s[0]);
+  const counts = sorted.map(s => s[1]);
+
+  let accum = 0;
+  const paretoPct = counts.map(c => {
+    accum += c;
+    return globalTotalNotices > 0 ? Math.min(100, Math.round((accum / globalTotalNotices) * 100)) : 0;
+  });
+
+  const criticalEquips = [];
+  sorted.forEach(([u, c], idx) => {
+    if (idx === 0 || paretoPct[idx - 1] < 80) {
+      criticalEquips.push(u);
+    }
+  });
+
+  const critPct = paretoPct[Math.min(criticalEquips.length - 1, paretoPct.length - 1)] || 0;
+
+  if (aiInsightEl) {
+    aiInsightEl.innerHTML = `
+      <div style="font-size:12px; color:var(--text); padding:11px 15px; background:linear-gradient(135deg, rgba(201,162,74,0.14) 0%, rgba(23,23,26,0.95) 100%); border-radius:10px; border:1px solid rgba(201,162,74,0.35); display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span style="font-size:18px;">🤖</span>
+        <div style="flex:1;">
+          <strong style="color:var(--gold);">Diagnóstico Inteligente IA (Pareto 80/20):</strong> 
+          <span style="color:var(--text); font-weight:600;">${criticalEquips.length} equipo(s) crítico(s)</span> (${criticalEquips.join(', ')}) acumulan el 
+          <strong style="color:var(--red);">${critPct}% del total de avisos de la planta</strong>. Se recomienda priorizar plan preventivo sobre estos equipos.
+        </div>
+      </div>`;
+  }
+
+  if (paretoChartInstance) {
+    paretoChartInstance.data.labels = labels;
+    paretoChartInstance.data.datasets[0].data = counts;
+    paretoChartInstance.data.datasets[1].data = paretoPct;
+    paretoChartInstance.update();
+    return;
+  }
+
+  paretoChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Frecuencia de Avisos',
+          data: counts,
+          backgroundColor: '#E4002B',
+          borderRadius: 6,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: '% Acumulado Pareto (80/20)',
+          data: paretoPct,
+          borderColor: '#C9A24A',
+          borderWidth: 3,
+          pointBackgroundColor: '#C9A24A',
+          pointRadius: 5,
+          tension: 0.3,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#F2F1EE', font: { family: 'Poppins', size: 11 } } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'JetBrains Mono', size: 9.5 } } },
+        y: { position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990' } },
+        y1: { position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { color: '#C9A24A', callback: v => v+'%' } }
+      }
+    }
+  });
+}
+
+// ============================================================================
+// SISTEMA DE PRESUPUESTOS (BUDGET MENSUAL) Y PROYECCIONES FINANCIERAS
+// ============================================================================
+const DEFAULT_MONTHLY_BUDGETS = {
+  '2026-01': 7000,
+  '2026-02': 7000,
+  '2026-03': 7000,
+  '2026-04': 7000,
+  '2026-05': 7000,
+  '2026-06': 7000,
+  '2026-07': 7000,
+  '2026-08': 7000,
+  '2026-09': 7000,
+  '2026-10': 7000,
+  '2026-11': 7000,
+  '2026-12': 7000
+};
+
+function getMonthlyBudgets() {
+  try {
+    const saved = localStorage.getItem('cocacola_monthly_budgets');
+    if (saved) return JSON.parse(saved);
+  } catch(e){}
+  return { ...DEFAULT_MONTHLY_BUDGETS };
+}
+
+function saveMonthlyBudgets(budgets) {
+  try {
+    localStorage.setItem('cocacola_monthly_budgets', JSON.stringify(budgets));
+    if (typeof _fbDb !== 'undefined') {
+      _fbDb.collection('plant_data').doc('budget_config').set({
+        budgets: budgets,
+        updatedAt: Date.now()
+      }).catch(()=>{});
+    }
+  } catch(e){}
+}
+
+function populateBudgetModalInputs() {
+  const grid = document.getElementById('budgetInputsGrid');
+  if (!grid) return;
+
+  const budgets = getMonthlyBudgets();
+  const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  grid.innerHTML = monthFullNames.map((name, idx) => {
+    const key = `2026-${String(idx + 1).padStart(2, '0')}`;
+    const val = budgets[key] || 7000;
+    return `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+        <label style="font-size:11px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:3px;">${name} 2026</label>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="color:var(--gold); font-size:12px; font-weight:700;">$</span>
+          <input type="number" class="budget-month-input" data-key="${key}" value="${val}" style="width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:5px; color:var(--text); padding:4px 8px; font-family:var(--mono); font-size:12px; font-weight:600;" />
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateBudgetModalTotal();
+
+  grid.querySelectorAll('.budget-month-input').forEach(input => {
+    input.addEventListener('input', updateBudgetModalTotal);
+  });
+}
+
+function updateBudgetModalTotal() {
+  const inputs = document.querySelectorAll('.budget-month-input');
+  let total = 0;
+  inputs.forEach(inp => {
+    total += parseFloat(inp.value) || 0;
+  });
+  const txtEl = document.getElementById('modalBudgetTotalTxt');
+  if (txtEl) {
+    txtEl.textContent = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+  }
+}
+
+let monthlyBudgetTrendChartInstance = null;
+function renderMonthlyBudgetTrendChart(rows) {
+  const ctx = document.getElementById('monthlyBudgetTrendChart');
+  if (!ctx) return;
+
+  const budgets = getMonthlyBudgets();
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  const monthCostMap = {};
+  for (let m = 1; m <= 12; m++) {
+    const key = `2026-${String(m).padStart(2, '0')}`;
+    monthCostMap[key] = { label: `${monthNames[m-1]} 2026`, fullLabel: `${monthFullNames[m-1]} 2026`, realCost: 0, count: 0, hasData: false };
+  }
+
+  rows.forEach(r => {
+    const dt = parseSAPDate(r[5]);
+    if (dt && dt.getFullYear() === 2026) {
+      const key = `2026-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+      if (monthCostMap[key]) {
+        const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+        monthCostMap[key].realCost += c;
+        monthCostMap[key].count++;
+        monthCostMap[key].hasData = true;
+      }
+    }
+  });
+
+  const keys = Object.keys(monthCostMap).sort();
+  const labels = keys.map(k => monthCostMap[k].label);
+  const realData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : null);
+  const budgetData = keys.map(k => budgets[k] || 7000);
+
+  const actualCosts = realData.filter(v => v !== null);
+  const avgMonthlyCost = actualCosts.length > 0 ? (actualCosts.reduce((a,b)=>a+b,0) / actualCosts.length) : 5500;
+  const projectionData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : Math.round(avgMonthlyCost));
+
+  const totalRealPeriod = actualCosts.reduce((a,b)=>a+b, 0);
+  const totalBudgetPeriod = keys.slice(0, actualCosts.length).reduce((sum, k) => sum + (budgets[k] || 7000), 0);
+  const tagMeta = document.getElementById('tagBudgetMeta');
+  if (tagMeta) {
+    const diff = totalBudgetPeriod - totalRealPeriod;
+    tagMeta.textContent = diff >= 0 ? `Ahorro Acumulado: +$${Math.round(diff).toLocaleString()} USD` : `Excedente: -$${Math.round(Math.abs(diff)).toLocaleString()} USD`;
+  }
+
+  if (monthlyBudgetTrendChartInstance) {
+    monthlyBudgetTrendChartInstance.data.labels = labels;
+    monthlyBudgetTrendChartInstance.data.datasets[0].data = realData;
+    monthlyBudgetTrendChartInstance.data.datasets[0].backgroundColor = realData.map((val, idx) => {
+      const b = budgetData[idx] || 7000;
+      return (val !== null && val > b) ? 'rgba(228, 0, 43, 0.85)' : 'rgba(61, 157, 107, 0.85)';
+    });
+    monthlyBudgetTrendChartInstance.data.datasets[1].data = budgetData;
+    monthlyBudgetTrendChartInstance.data.datasets[2].data = projectionData;
+    monthlyBudgetTrendChartInstance.update();
+    return;
+  }
+
+  monthlyBudgetTrendChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Gasto Real ($ USD)',
+          data: realData,
+          backgroundColor: realData.map((val, idx) => {
+            const b = budgetData[idx] || 7000;
+            return (val !== null && val > b) ? 'rgba(228, 0, 43, 0.85)' : 'rgba(61, 157, 107, 0.85)';
+          }),
+          borderRadius: 6,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Budget Asignado ($ USD)',
+          data: budgetData,
+          borderColor: '#C9A24A',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          borderDash: [6, 4],
+          pointBackgroundColor: '#C9A24A',
+          pointBorderColor: '#17171A',
+          pointRadius: 4,
+          tension: 0.1,
+          order: 0
+        },
+        {
+          type: 'line',
+          label: 'Tendencia & Proyección ($ USD)',
+          data: projectionData,
+          borderColor: '#00D2FF',
+          backgroundColor: 'rgba(0, 210, 255, 0.08)',
+          borderWidth: 2,
+          pointBackgroundColor: '#00D2FF',
+          pointRadius: 3,
+          fill: true,
+          tension: 0.35,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#F2F1EE', font: { family: 'Poppins', size: 10.5 }, boxWidth: 12 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const val = item.raw;
+              if (val === null) return ` Sin datos aún`;
+              const idx = item.dataIndex;
+              const b = budgetData[idx] || 7000;
+              const diff = b - val;
+              const diffTxt = diff >= 0 ? `(Bajo Budget: +$${diff.toLocaleString()} USD)` : `(Sobre Budget: -$${Math.abs(diff).toLocaleString()} USD)`;
+              if (item.datasetIndex === 0) {
+                return ` Real: $${Number(val).toLocaleString()} USD ${diffTxt}`;
+              } else if (item.datasetIndex === 1) {
+                return ` Budget: $${Number(val).toLocaleString()} USD`;
+              } else {
+                return ` Proyección: $${Number(val).toLocaleString()} USD`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'Poppins', size: 10 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#C9A24A', callback: v => '$' + Number(v).toLocaleString() } }
+      }
+    }
+  });
+}
+
+let categoryChartInstance = null;
+function renderCategoryChart(rows) {
+  const ctx = document.getElementById('categoryChart');
+  if (!ctx) return;
+
+  const catCounts = { MA: 0, SEG: 0, CI: 0, HER: 0, RQ: 0, GEN: 0 };
+  const catCosts  = { MA: 0, SEG: 0, CI: 0, HER: 0, RQ: 0, GEN: 0 };
+
+  rows.forEach(r => {
+    const cat = extractNoticeCategory(r[1]);
+    catCounts[cat.code] = (catCounts[cat.code] || 0) + 1;
+    const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+    catCosts[cat.code] = (catCosts[cat.code] || 0) + c;
+  });
+
+  const dataVals = [catCounts.MA, catCounts.SEG, catCounts.CI, catCounts.HER, catCounts.RQ, catCounts.GEN];
+
+  if (categoryChartInstance) {
+    categoryChartInstance.data.datasets[0].data = dataVals;
+    categoryChartInstance.update();
+    return;
+  }
+
+  categoryChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['🌿 MA (Medio Ambiente)', '🛡️ SEG (Seguridad)', '⚠️ CI (Condición Insegura)', '🔧 HER (Herramienta)', '📋 RQ (Requerimiento)', '⚙️ GEN (General)'],
+      datasets: [{
+        data: dataVals,
+        backgroundColor: ['#3D9D6B', '#E4002B', '#C9A24A', '#00D2FF', '#9D4EDD', '#57555C'],
+        borderColor: '#17171A', borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#F2F1EE', font: { family: 'Poppins', size: 10.5 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const codeList = ['MA', 'SEG', 'CI', 'HER', 'RQ', 'GEN'];
+              const code = codeList[ctx.dataIndex];
+              const costVal = catCosts[code] || 0;
+              return ` ${ctx.label}: ${ctx.raw} avisos · $${costVal.toLocaleString('en-US', {minimumFractionDigits:2})} USD`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+let lineTrendChartInstance = null;
+function renderLineTrendChart(rows) {
+  const ctx = document.getElementById('lineTrendChart');
+  if (!ctx) return;
+
+  const areaCostMap = {
+    'Jarabe Terminado': 0,
+    'Jarabe Simple': 0,
+    'Sistema CIP': 0,
+    'Mezcladora / Premix': 0,
+    'Líneas Envasado': 0,
+    'Servicios Planta': 0
+  };
+
+  rows.forEach(r => {
+    const rawUbic = String(r[9] || r[3] || '').toUpperCase();
+    const denom = String(r[10] || r[3] || '').toUpperCase();
+    const desc = String(r[1] || '').toUpperCase();
+    const combined = rawUbic + ' ' + denom + ' ' + desc;
+    const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+
+    if (combined.includes('JTR') || combined.includes('TERMINADO')) areaCostMap['Jarabe Terminado'] += c;
+    else if (combined.includes('JSP') || combined.includes('SIMPLE')) areaCostMap['Jarabe Simple'] += c;
+    else if (combined.includes('CIP') || combined.includes('LAVADO')) areaCostMap['Sistema CIP'] += c;
+    else if (combined.includes('PMX') || combined.includes('PREMIX') || combined.includes('MEZCLADORA')) areaCostMap['Mezcladora / Premix'] += c;
+    else if (combined.includes('LINE') || combined.includes('LLENADORA') || combined.includes('PACK')) areaCostMap['Líneas Envasado'] += c;
+    else areaCostMap['Servicios Planta'] += c;
+  });
+
+  const labels = Object.keys(areaCostMap);
+  const dataVals = Object.values(areaCostMap).map(v => Math.round(v));
+
+  if (lineTrendChartInstance) {
+    lineTrendChartInstance.data.labels = labels;
+    lineTrendChartInstance.data.datasets[0].data = dataVals;
+    lineTrendChartInstance.update();
+    return;
+  }
+
+  lineTrendChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Gasto Total ($ USD)',
+        data: dataVals,
+        backgroundColor: ['rgba(201, 162, 74, 0.85)', 'rgba(0, 210, 255, 0.85)', 'rgba(61, 157, 107, 0.85)', 'rgba(228, 0, 43, 0.85)', 'rgba(157, 78, 221, 0.85)', 'rgba(139, 137, 144, 0.85)'],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` Gasto: $${Number(ctx.raw).toLocaleString('en-US')} USD`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'Poppins', size: 10.5 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#C9A24A', callback: v => '$' + Number(v).toLocaleString() } }
+      }
+    }
+  });
+}
+
+
+
+let mtbfTimelineChartInstance = null;
+function renderMTBFReliabilitySection(rows) {
+  const chartCtx = document.getElementById('mtbfTimelineChart');
+  const listEl = document.getElementById('equiposReliabilityList');
+  const tagCountEl = document.getElementById('tagZATotalCount');
+  const globalTxtEl = document.getElementById('mtbfIntervalGlobalTxt');
+
+  // 1. Filtrar únicamente eventos de avería / parada no programada (Clase ZA)
+  const zaNotices = rows.filter(r => String(r[2] || '').trim().toUpperCase() === 'ZA').map(r => {
+    const dt = parseSAPDate(r[5]);
+    const eq = (r[11] && r[11] !== '—') ? r[11] : (r[3] ? r[3].split('·')[0].trim() : 'Equipo');
+    const denom = (r[12] && r[12] !== '—') ? r[12] : (r[3] ? r[3].split('·')[1]?.trim() || eq : eq);
+    return {
+      aviso: r[0],
+      equipo: eq,
+      denom: denom,
+      desc: r[1],
+      fechaStr: r[5],
+      dt: dt || new Date(),
+      status: r[4],
+      raw: r
+    };
+  }).sort((a, b) => a.dt.getTime() - b.dt.getTime());
+
+  if (tagCountEl) tagCountEl.textContent = `${zaNotices.length} Avería${zaNotices.length !== 1 ? 's' : ''} ZA Registradas`;
+
+  if (zaNotices.length === 0) {
+    if (listEl) {
+      listEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-dim); font-size:12px;">No hay eventos de avería ZA registrados en el período seleccionado.</div>';
+    }
+    if (globalTxtEl) globalTxtEl.textContent = 'Sin paradas en el período';
+    if (mtbfTimelineChartInstance) {
+      mtbfTimelineChartInstance.data.labels = [];
+      mtbfTimelineChartInstance.data.datasets[0].data = [];
+      mtbfTimelineChartInstance.update();
+    }
+    return;
+  }
+
+  // 2. Calcular intervalos reales Falla-a-Falla en la planta (Horas entre paradas consecutivas)
+  const timelineLabels = [];
+  const timelineIntervalHrs = [];
+  let totalIntervalMs = 0;
+  let intervalCount = 0;
+
+  for (let i = 0; i < zaNotices.length; i++) {
+    const cur = zaNotices[i];
+    const prev = i > 0 ? zaNotices[i - 1] : null;
+
+    let diffHrs = 0;
+    if (prev) {
+      const diffMs = Math.max(0, cur.dt.getTime() - prev.dt.getTime());
+      diffHrs = Math.round(diffMs / (1000 * 60 * 60));
+      totalIntervalMs += diffMs;
+      intervalCount++;
+    } else {
+      diffHrs = 0; // Primer evento registrado
+    }
+
+    const shortDate = cur.fechaStr.length >= 5 ? cur.fechaStr.substring(0, 5) : cur.fechaStr;
+    timelineLabels.push(`${shortDate} (#${cur.aviso})`);
+    timelineIntervalHrs.push(diffHrs > 0 ? diffHrs : 24);
+  }
+
+  const avgIntervalHrs = intervalCount > 0 ? Math.round(totalIntervalMs / intervalCount / (1000 * 60 * 60)) : 720;
+  const avgIntervalDays = (avgIntervalHrs / 24).toFixed(1);
+
+  if (globalTxtEl) {
+    globalTxtEl.textContent = `Intervalo Promedio: cada ~${avgIntervalHrs}h (~${avgIntervalDays} días)`;
+  }
+
+  // 3. Renderizar Gráfica Cronológica de Intervalos entre Fallas ZA
+  if (chartCtx) {
+    if (mtbfTimelineChartInstance) {
+      mtbfTimelineChartInstance.data.labels = timelineLabels;
+      mtbfTimelineChartInstance.data.datasets[0].data = timelineIntervalHrs;
+      mtbfTimelineChartInstance.update();
+    } else {
+      mtbfTimelineChartInstance = new Chart(chartCtx, {
+        type: 'bar',
+        data: {
+          labels: timelineLabels,
+          datasets: [{
+            label: 'Horas Operativas Antes de la Falla',
+            data: timelineIntervalHrs,
+            backgroundColor: 'rgba(0, 210, 255, 0.75)',
+            borderColor: '#00D2FF',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0].dataIndex;
+                  const item = zaNotices[idx];
+                  return `${item.fechaStr} · Aviso #${item.aviso} (${item.equipo})`;
+                },
+                label: (item) => {
+                  const idx = item.dataIndex;
+                  const hrs = item.raw;
+                  const days = (hrs / 24).toFixed(1);
+                  const desc = zaNotices[idx].desc;
+                  return [
+                    ` Intervalo desde falla previa: ${hrs} hrs (${days} días)`,
+                    ` Falla: ${desc.slice(0, 45)}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'Poppins', size: 9.5 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#00D2FF', callback: v => v + 'h' } }
+          }
+        }
+      });
+    }
+  }
+
+  // 4. Agrupación por Equipo: Cálculo de MTBF Máquina y Pronóstico de Siguiente Falla
+  const eqMap = {};
+  zaNotices.forEach(z => {
+    if (!eqMap[z.equipo]) {
+      eqMap[z.equipo] = {
+        code: z.equipo,
+        denom: z.denom,
+        events: []
+      };
+    }
+    eqMap[z.equipo].events.push(z);
+  });
+
+  const now = new Date();
+  const eqList = Object.values(eqMap).map(eqObj => {
+    const count = eqObj.events.length;
+    const lastEvent = eqObj.events[count - 1];
+    const daysSinceLast = Math.max(0, Math.floor((now.getTime() - lastEvent.dt.getTime()) / (1000 * 60 * 60 * 24)));
+
+    let machineMtbfHrs = 0;
+    let machineMtbfDays = 0;
+
+    if (count > 1) {
+      const firstEvent = eqObj.events[0];
+      const spanMs = Math.max(0, lastEvent.dt.getTime() - firstEvent.dt.getTime());
+      machineMtbfHrs = Math.round(spanMs / (count - 1) / (1000 * 60 * 60));
+      machineMtbfDays = Math.round(machineMtbfHrs / 24);
+    } else {
+      // 1 sola falla: estimado sobre la ventana operativa observada
+      machineMtbfHrs = 2160; // ~90 días estimado
+      machineMtbfDays = 90;
+    }
+
+    const nextDueDays = Math.max(0, machineMtbfDays - daysSinceLast);
+    const isImminent = count > 1 && daysSinceLast >= (machineMtbfDays * 0.75);
+
+    return {
+      code: eqObj.code,
+      denom: eqObj.denom,
+      count: count,
+      lastDate: lastEvent.fechaStr,
+      lastDesc: lastEvent.desc,
+      daysSinceLast: daysSinceLast,
+      mtbfHrs: machineMtbfHrs,
+      mtbfDays: machineMtbfDays,
+      nextDueDays: nextDueDays,
+      isImminent: isImminent
+    };
+  }).sort((a, b) => b.count - a.count || b.daysSinceLast - a.daysSinceLast);
+
+  if (listEl) {
+    listEl.innerHTML = eqList.map(eq => {
+      const alertPill = eq.count > 1
+        ? (eq.isImminent 
+            ? `<span style="font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:5px; background:rgba(228,0,43,0.15); color:var(--red); border:1px solid rgba(228,0,43,0.35); font-weight:700;">⚠️ Falla en ~${eq.nextDueDays}d</span>`
+            : `<span style="font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:5px; background:rgba(61,157,107,0.15); color:var(--ok); border:1px solid rgba(61,157,107,0.35); font-weight:700;">Estable</span>`)
+        : `<span style="font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:5px; background:rgba(201,162,74,0.12); color:var(--gold); border:1px solid rgba(201,162,74,0.3); font-weight:600;">1 Evento ZA</span>`;
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:8px; padding:8px 12px; gap:10px;">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong style="font-family:var(--mono); color:var(--gold); font-size:12px;">${eq.code}</strong>
+              <span style="font-size:11px; color:var(--text);">${eq.denom}</span>
+            </div>
+            <div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">
+              Última avería: ${eq.lastDate} · <span style="color:var(--cyan); font-weight:600;">${eq.daysSinceLast} días operando sin parada</span>
+            </div>
+          </div>
+          <div style="text-align:right; white-space:nowrap;">
+            <div style="font-family:var(--mono); font-size:11.5px; font-weight:700; color:var(--cyan);">MTBF: ~${eq.mtbfHrs}h (${eq.mtbfDays}d)</div>
+            <div style="margin-top:2px;">${alertPill}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderRankingTable(rows, globalTotalCost) {
+  const tbody = document.getElementById('rankingTableBody');
+  if (!tbody) return;
+
+  const ubicMap = {};
+  rows.forEach(r => {
+    const u = (r[3] && r[3] !== '—') ? r[3] : 'Sin Ubicación';
+    if (!ubicMap[u]) ubicMap[u] = { total: 0, open: 0, closed: 0, zaCount: 0, cost: 0, cats: {}, zaDates: [] };
+
+    ubicMap[u].total++;
+    const isClosed = String(r[4] || '').includes('MECE');
+    if (isClosed) ubicMap[u].closed++;
+    else ubicMap[u].open++;
+
+    if (String(r[2] || '').trim().toUpperCase() === 'ZA') {
+      ubicMap[u].zaCount++;
+      const dt = parseSAPDate(r[5]);
+      if (dt) ubicMap[u].zaDates.push(dt);
+    }
+
+    const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+    ubicMap[u].cost += c;
+
+    const cat = extractNoticeCategory(r[1]);
+    ubicMap[u].cats[cat.code] = (ubicMap[u].cats[cat.code] || 0) + 1;
+  });
+
+  const sortedUbics = Object.entries(ubicMap).sort((a,b) => b[1].zaCount - a[1].zaCount || b[1].cost - a[1].cost || b[1].total - a[1].total).slice(0, 10);
+  document.getElementById('rankingTagCount').textContent = `${sortedUbics.length} equipos analizados con métricas MTBF`;
+
+  if (sortedUbics.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-dim); padding:30px;">No hay equipos registrados para el filtro seleccionado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sortedUbics.map(([ubic, data]) => {
+    const topCatCode = Object.entries(data.cats).sort((a,b) => b[1] - a[1])[0]?.[0] || 'GEN';
+    const dummyDesc = topCatCode === 'GEN' ? 'Aviso' : topCatCode;
+    const cat = extractNoticeCategory(dummyDesc);
+    const riskPct = Math.min(99, Math.round(data.open * 20 + data.zaCount * 25 + 20));
+    const riskColor = riskPct > 70 ? 'var(--red)' : (riskPct > 45 ? 'var(--gold)' : 'var(--ok)');
+
+    let machineMtbfTxt = '—';
+    if (data.zaCount > 1 && data.zaDates.length > 1) {
+      data.zaDates.sort((a,b) => a.getTime() - b.getTime());
+      const spanMs = data.zaDates[data.zaDates.length - 1].getTime() - data.zaDates[0].getTime();
+      const avgHrs = Math.round(spanMs / (data.zaCount - 1) / (1000 * 60 * 60));
+      machineMtbfTxt = `~${avgHrs}h (${Math.round(avgHrs/24)}d)`;
+    } else if (data.zaCount === 1) {
+      machineMtbfTxt = `1 Evento (~90d)`;
+    } else {
+      machineMtbfTxt = `Sin Averías ZA`;
+    }
+
+    const zaBadge = data.zaCount > 0
+      ? `<span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--red); background:rgba(228,0,43,0.15); border:1px solid rgba(228,0,43,0.35); padding:2px 7px; border-radius:5px;">⚡ ${data.zaCount} Parada${data.zaCount>1?'s':''}</span>`
+      : `<span style="font-family:var(--mono); font-size:11px; color:var(--ok);">0 (Al día)</span>`;
+
+    return `
+      <tr>
+        <td style="font-family:var(--mono); font-weight:700; color:var(--gold);">${ubic}</td>
+        <td style="font-family:var(--mono); font-weight:600;">${data.total}</td>
+        <td>${zaBadge}</td>
+        <td style="font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--cyan);">${machineMtbfTxt}</td>
+        <td style="color:var(--red); font-weight:600;">${data.open}</td>
+        <td>
+          <span style="font-family:var(--mono); font-weight:700; color:var(--gold); font-size:12px;">$${data.cost.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})} USD</span>
+        </td>
+        <td>
+          <span style="font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:5px; background:${cat.bg}; color:${cat.color}; border:1px solid ${cat.border}; font-weight:600;">${cat.icon} ${cat.code} · ${cat.label}</span>
+        </td>
+        <td>
+          <span style="font-family:var(--mono); font-weight:700; color:${riskColor};">${riskPct}% Riesgo</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function deleteSingleBatch(batchId) {
+  if (!batchId || batchId === 'ALL_TIME') {
+    alert('Por favor seleccione un archivo específico para eliminar.');
+    return;
+  }
+
+  const batchInfo = allBatchesMap[batchId];
+  const fileName = batchInfo ? batchInfo.fileName : batchId;
+
+  if (!confirm(`⚠️ ATENCIÓN MASTER: ¿Está seguro de eliminar PERMANENTEMENTE el archivo "${fileName}" y todos sus avisos asociados del historial de la nube?`)) {
+    return;
+  }
+
+  if (typeof _fbDb === 'undefined') return;
+
+  try {
+    // 1. Eliminar documento de upload_history
+    await _fbDb.collection('upload_history').doc(batchId).delete();
+
+    // 2. Eliminar avisos asociados de avisos_historico
+    const snap = await _fbDb.collection('avisos_historico').get();
+    const deletePromises = [];
+    snap.forEach(doc => {
+      if (doc.id.startsWith(batchId) || doc.data().batchId === batchId) {
+        deletePromises.push(doc.ref.delete());
+      }
+    });
+    await Promise.all(deletePromises);
+
+    // 3. Si era el activo, actualizar plant_data/active_csv
+    const activeSnap = await _fbDb.collection('plant_data').doc('active_csv').get();
+    if (activeSnap && activeSnap.exists && activeSnap.data().activeBatchId === batchId) {
+      const remainingSnap = await _fbDb.collection('upload_history').orderBy('uploadTimestamp', 'desc').get();
+      if (!remainingSnap.empty) {
+        const nextBatch = remainingSnap.docs[0].data();
+        await _fbDb.collection('plant_data').doc('active_csv').set({
+          activeBatchId: nextBatch.batchId,
+          csvText: nextBatch.csvText,
+          updatedAt: nextBatch.uploadTimestamp,
+          fileName: nextBatch.fileName,
+          rowsCount: nextBatch.rowsCount
+        });
+      } else {
+        const defaultRows = parseCSVText(DEFAULT_EMBEDDED_CSV);
+        await _fbDb.collection('plant_data').doc('active_csv').set({
+          csvText: DEFAULT_EMBEDDED_CSV,
+          updatedAt: Date.now(),
+          fileName: 'DBMANTTO.csv',
+          rowsCount: defaultRows.length
+        });
+      }
+    }
+
+    alert(`🗑️ Archivo "${fileName}" eliminado del historial.`);
+    setTimeout(() => loadStatsData(), 500);
+  } catch (err) {
+    console.error('Error al eliminar archivo:', err);
+    alert('❌ Error al eliminar archivo: ' + err.message);
+  }
+}
+
+function setupRealtimeCloudSync() {
+  if (typeof _fbDb !== 'undefined') {
+    try {
+      _fbDb.collection('plant_data').doc('active_csv').onSnapshot(docSnap => {
+        loadStatsData();
+      }, err => {});
+
+      _fbDb.collection('upload_history').onSnapshot(snap => {
+        loadStatsData();
+      }, err => {});
+    } catch(e) {}
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkMasterAuth();
+
+  // Precarga instantánea sincrónica si los datos ya están disponibles
+  if (typeof window.DEFAULT_EMBEDDED_CSV === 'string' && currentStatsRows.length === 0) {
+    try {
+      currentStatsRows = parseCSVText(window.DEFAULT_EMBEDDED_CSV);
+      allHistoricalNotices = currentStatsRows;
+      const batchSelectEl = document.getElementById('selectUploadBatch');
+      if (batchSelectEl) {
+        batchSelectEl.innerHTML = `<option value="ALL_TIME">📜 Historial Activo de Planta (${currentStatsRows.length} avisos)</option>`;
+      }
+      populateMonthDropdown(currentStatsRows);
+      renderStatsView();
+    } catch(e) {}
+  }
+
+  loadStatsData();
+  setupRealtimeCloudSync();
+
+  const batchSelect = document.getElementById('selectUploadBatch');
+  const deleteBtn = document.getElementById('deleteBatchBtn');
+
+  if (batchSelect) {
+    batchSelect.addEventListener('change', (e) => {
+      const selectedBatch = e.target.value;
+      if (deleteBtn) {
+        deleteBtn.style.display = (selectedBatch && selectedBatch !== 'ALL_TIME') ? 'inline-flex' : 'none';
+      }
+      if (selectedBatch === 'ALL_TIME') {
+        currentStatsRows = allHistoricalNotices.length > 0 ? allHistoricalNotices : currentStatsRows;
+      } else if (allBatchesMap[selectedBatch]) {
+        currentStatsRows = allBatchesMap[selectedBatch].rows;
+      }
+      renderStatsView();
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', () => {
+      const selectedBatch = batchSelect ? batchSelect.value : null;
+      if (!selectedBatch || selectedBatch === 'ALL_TIME') {
+        alert('Seleccione un archivo específico para eliminar.');
+        return;
+      }
+      deleteSingleBatch(selectedBatch);
+    });
+  }
+
+  document.getElementById('filterCategory')?.addEventListener('change', renderStatsView);
+  document.getElementById('filterMonth')?.addEventListener('change', renderStatsView);
+  document.getElementById('searchInput')?.addEventListener('input', renderStatsView);
+
+  // Modal de Presupuesto (Budget)
+  const budgetModal = document.getElementById('budgetConfigModal');
+  const openBudgetBtn = document.getElementById('btnOpenBudgetModal');
+  const closeBudgetBtn = document.getElementById('btnCloseBudgetModal');
+  const resetBudgetBtn = document.getElementById('btnResetBudgetDefaults');
+  const saveBudgetBtn = document.getElementById('btnSaveBudgetConfig');
+
+  if (openBudgetBtn && budgetModal) {
+    openBudgetBtn.addEventListener('click', () => {
+      populateBudgetModalInputs();
+      budgetModal.classList.add('active');
+    });
+  }
+
+  if (closeBudgetBtn && budgetModal) {
+    closeBudgetBtn.addEventListener('click', () => {
+      budgetModal.classList.remove('active');
+    });
+  }
+
+  if (budgetModal) {
+    budgetModal.addEventListener('click', (e) => {
+      if (e.target === budgetModal) budgetModal.classList.remove('active');
+    });
+  }
+
+  if (resetBudgetBtn) {
+    resetBudgetBtn.addEventListener('click', () => {
+      saveMonthlyBudgets(DEFAULT_MONTHLY_BUDGETS);
+      populateBudgetModalInputs();
+      renderStatsView();
+    });
+  }
+
+  if (saveBudgetBtn) {
+    saveBudgetBtn.addEventListener('click', () => {
+      const inputs = document.querySelectorAll('.budget-month-input');
+      const newBudgets = {};
+      inputs.forEach(inp => {
+        const key = inp.getAttribute('data-key');
+        const val = parseFloat(inp.value) || 0;
+        if (key) newBudgets[key] = val;
+      });
+      saveMonthlyBudgets(newBudgets);
+      if (budgetModal) budgetModal.classList.remove('active');
+      renderStatsView();
+      alert('✅ Presupuestos mensuales (Budget) guardados y aplicados a las gráficas y KPIs.');
+    });
+  }
+
+  // Export Excel
+  document.getElementById('exportStatsExcelBtn')?.addEventListener('click', () => {
+    if (currentStatsRows.length === 0) return alert('No hay datos para exportar');
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['N.º de Aviso', 'Descripción', 'Clase', 'Ubicación Técnica', 'Status', 'Fecha Creación', 'Autor'],
+      ...currentStatsRows
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Estadisticas_Executive");
+    XLSX.writeFile(wb, `Reporte_Estadistico_Master_CocaCola_${Date.now()}.xlsx`);
+  });
+
+  // Control del menú desplegable superpuesto móvil
+  const toggleBtn = document.getElementById('mobileMenuToggleBtn');
+  const navMenu   = document.querySelector('.nav');
+  const overlay   = document.getElementById('sidebarOverlay');
+
+  const closeMenu = () => {
+    if (navMenu) navMenu.classList.remove('active-mobile-nav');
+    if (overlay) overlay.classList.remove('active');
+  };
+
+  if (toggleBtn && navMenu) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = navMenu.classList.contains('active-mobile-nav');
+      if (isOpen) {
+        closeMenu();
+      } else {
+        navMenu.classList.add('active-mobile-nav');
+        if (overlay) overlay.classList.add('active');
+      }
+    });
+
+    if (overlay) {
+      overlay.addEventListener('click', closeMenu);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (navMenu.classList.contains('active-mobile-nav') && !navMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
+        closeMenu();
+      }
+    });
+
+    navMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historial de Avisos & Analytics IA | Coca-Cola</title>
+<link rel="icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="shortcut icon" type="image/png" href="Recources/LogoCocaCola.png">
+<link rel="apple-touch-icon" href="Recources/LogoCocaCola.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"><\/script>');}</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>if(typeof XLSX==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');}</script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="plant-data-source.js"></script>
+<script src="system-settings.js"></script>
+<script>
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const _fbStorage = firebase.storage();
+  const _fbDb = firebase.firestore();
+</script>
+<style>
+:root{
+  --red: #E4002B;
+  --red-dim: rgba(228,0,43,0.14);
+  --gold: #C9A24A;
+  --gold-dim: rgba(201,162,74,0.15);
+  --bg: #0E0E10;
+  --panel: #17171A;
+  --panel-2: #1C1C1F;
+  --line: rgba(255,255,255,0.08);
+  --line-soft: rgba(255,255,255,0.05);
+  --text: #F2F1EE;
+  --text-dim: #8B8990;
+  --text-faint: #57555C;
+  --ok: #3D9D6B;
+  --warn: #C9A24A;
+  --danger: #E4002B;
+  --cyan: #00D2FF;
+  --purple: #9D4EDD;
+  --radius: 14px;
+  --font: 'Poppins', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  font-size:14px;
+}
+::-webkit-scrollbar{ height:8px; width:8px; }
+::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.1); border-radius:8px; }
+
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 250px; background: var(--panel); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 100;
+}
+.logo-slot { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 0 8px; }
+.official-logo { height: 32px; width: auto; object-fit: contain; }
+.logo-slot .cap { font-size: 11px; color: var(--text-dim); }
+
+.nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.nav a {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: 10px; color: var(--text-dim); text-decoration: none;
+  font-weight: 500; font-size: 13.5px; transition: all .2s ease;
+}
+.nav a:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav a.active { background: var(--red-dim); color: var(--red); font-weight: 600; }
+.nav a .icon { width: 18px; height: 18px; stroke-width: 2; stroke: currentColor; fill: none; }
+.nav-sep { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-faint); margin: 18px 14px 6px; letter-spacing: 1px; }
+
+.sidebar-foot { padding-top: 16px; border-top: 1px solid var(--line); margin-top: 16px; }
+.sync-chip {
+  display: flex; align-items: center; gap: 8px; font-size: 11.5px;
+  color: var(--text-dim); background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;
+}
+.sync-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+.main { flex: 1; padding: 32px 40px; overflow-x: hidden; max-width: 1600px; }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.topbar h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+.topbar .greet { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+
+.controls-bar {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  background: var(--panel); padding: 16px 20px; border-radius: var(--radius);
+  border: 1px solid var(--line); margin-bottom: 24px;
+}
+.filter-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.select-input, .date-input, .search-box input {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+  padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-family: var(--font); outline: none;
+}
+.select-input:focus, .date-input:focus, .search-box input:focus { border-color: var(--gold); }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; background: var(--panel-2);
+  border: 1px solid var(--line); color: var(--text); padding: 9px 16px; border-radius: 9px;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all .2s ease; font-family: var(--font);
+}
+.btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--red); border-color: var(--red); color: #FFF; box-shadow: 0 4px 14px rgba(228,0,43,0.3); }
+.btn.primary:hover { background: #C40024; box-shadow: 0 6px 20px rgba(228,0,43,0.45); }
+.btn.primary:active { transform: scale(.97); }
+.btn.gold { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.btn.gold:hover { background: rgba(201,162,74,0.25); }
+.btn.gold:active { transform: scale(.97); }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.kpi-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  animation: fadeSlideUp .4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.kpi-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+.kpi-card:nth-child(1) { animation-delay: .04s; }
+.kpi-card:nth-child(2) { animation-delay: .08s; }
+.kpi-card:nth-child(3) { animation-delay: .12s; }
+.kpi-card:nth-child(4) { animation-delay: .16s; }
+.kpi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.kpi-ic {
+  width: 36px; height: 36px; border-radius: 9px; background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center; color: var(--gold);
+}
+.kpi-ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+.kpi-value { font-size: 28px; font-weight: 700; font-family: var(--mono); letter-spacing: -1px; }
+.kpi-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; font-weight: 500; }
+.kpi-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-family: var(--mono); }
+.badge-ok { background: rgba(61,157,107,0.15); color: var(--ok); }
+.badge-warn { background: rgba(201,162,74,0.15); color: var(--gold); }
+.badge-danger { background: rgba(228,0,43,0.15); color: var(--red); }
+.badge-cyan { background: rgba(0,210,255,0.15); color: var(--cyan); }
+
+.grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 28px; }
+@media(max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.panel-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 24px; position: relative; min-width: 0; overflow: hidden;
+}
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.panel-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.panel-title .tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.06); color: var(--gold); font-weight: 600; }
+
+.chart-wrapper { height: 280px; position: relative; width: 100%; min-width: 0; }
+
+.ai-prediction-card {
+  background: linear-gradient(145deg, rgba(23,23,26,1) 0%, rgba(32,25,35,1) 100%);
+  border: 1px solid rgba(201,162,74,0.3); border-radius: var(--radius); padding: 22px;
+  position: relative; overflow: hidden; min-width: 0;
+}
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 6px; background: rgba(201,162,74,0.18);
+  color: var(--gold); font-size: 10.5px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; border: 1px solid rgba(201,162,74,0.3);
+}
+.ai-title { font-size: 17px; font-weight: 700; color: #FFF; margin-bottom: 6px; }
+.ai-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px; }
+.pred-item {
+  background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 8px; word-break: break-word;
+}
+.pred-loc { font-weight: 600; font-size: 13px; color: var(--text); word-break: break-all; }
+.pred-sub { font-size: 11px; color: var(--text-dim); }
+.pred-risk { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+
+.table-wrapper { width: 100%; overflow-x: auto; border-radius: 10px; border: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 650px; }
+th { background: var(--panel-2); color: var(--text-dim); font-size: 11.5px; font-weight: 600; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 14px 16px; border-bottom: 1px solid var(--line-soft); color: var(--text); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono); white-space: nowrap;
+}
+.status-abierto { background: rgba(228,0,43,0.14); color: var(--red); border: 1px solid rgba(228,0,43,0.3); }
+.status-cerrado { background: rgba(61,157,107,0.14); color: var(--ok); border: 1px solid rgba(61,157,107,0.3); }
+.status-proceso { background: rgba(201,162,74,0.14); color: var(--gold); border: 1px solid rgba(201,162,74,0.3); }
+
+/* Overlay de Menú Móvil */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px); z-index: 9998; opacity: 0; transition: opacity .3s ease;
+}
+.sidebar-overlay.active { display: block; opacity: 1; }
+
+/* Responsive Queries */
+.mobile-menu-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
+
+@media(max-width: 1024px) {
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .controls-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .filter-group { flex-direction: column; align-items: stretch; width: 100%; }
+  .select-input, .search-box input { width: 100% !important; }
+}
+
+@media(max-width: 768px) {
+  .sidebar { position: fixed; left: -270px; transition: left .3s ease; z-index: 9999; }
+  .sidebar.active { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.8); }
+  .mobile-menu-toggle { display: flex !important; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); }
+  .mobile-scroll-hint { display: flex !important; }
+  .main { padding: 16px 12px !important; }
+  .topbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .topbar-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .topbar-actions .btn { width: 100%; justify-content: center; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .kpi-card { padding: 14px !important; }
+  .kpi-value { font-size: 22px !important; }
+  .kpi-label { font-size: 11px !important; }
+  .chart-wrapper { height: 220px !important; }
+}
+
+@media(max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+  .panel-box { padding: 14px !important; }
+  .ai-prediction-card { padding: 16px !important; }
+  .pred-item { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-slot">
+      <img src="Recources/LogoCocaCola.png" alt="Coca-Cola Logo" class="official-logo" onerror="this.style.display='none';" />
+      <div class="cap">
+        <strong style="color:var(--text);font-size:10.5px;font-weight:600;display:block;line-height:1.2;">Plataforma de Avisos</strong>
+        <span style="color:var(--gold);font-weight:600;font-size:9.5px;display:block;margin-top:2px;">de Mantenimiento</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="dashboard-coca-cola.html"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg><span class="label">Resumen</span></a>
+      <a href="avisos.html"><svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 1 5.4-5.4l-3.4 3.4-2-2z"/></svg><span class="label">Avisos</span></a>
+      <a href="ubicaciones.html"><svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="label">Equipos</span></a>
+      <a href="tipos-aviso.html"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 13.5 12 22l-9-9 8.6-8.5H20a1 1 0 0 1 1 1z"/><circle cx="15.5" cy="8.5" r="1.2"/></svg><span class="label">Tipos de aviso</span></a>
+      <a href="alertas.html"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="label">Alertas</span></a>
+      <a href="historial-avisos.html" class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg><span class="label">Historial de Avisos</span></a>
+      <a href="estadisticas.html"><svg class="icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span class="label">Estadísticas</span></a>
+      <div class="nav-sep">Datos & Reportes</div>
+      <a href="dashboard-coca-cola.html#masterOnlySourceBlock"><svg class="icon" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg><span class="label">Excel / SAP</span></a>
+      <a href="#" id="sideSettingsBtn" class="btn-open-settings" style="cursor:pointer;"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="label">Configuración</span></a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sync-chip">
+        <span class="dot"></span>
+        <span class="txt">Historial Sincronizado</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="mobile-menu-toggle" id="menuBtn">
+          <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div>
+          <h1>Historial de Avisos & Analytics IA</h1>
+          <div class="greet">Repositorio histórico de mantenimientos, predicciones de fallas y reportes ejecutivos SAP PM</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn gold" id="exportHistoryExcelBtn"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Exportar Reporte Excel</button>
+        <button class="btn primary" id="printReportBtn"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir Reporte PDF</button>
+        <button class="btn" id="globalSettingsBtn" title="Configuración del Sistema"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuración</button>
+      </div>
+    </div>
+
+    <!-- CONTROLES Y FILTROS -->
+    <div class="controls-bar">
+      <div class="filter-group">
+        <select class="select-input" id="selectUploadBatch" style="border-color:var(--gold); color:var(--gold); font-weight:600;">
+          <option value="ALL_TIME">Historial Acumulado (Todas las cargas)</option>
+        </select>
+
+        <button class="btn" id="deleteBatchBtn" title="Borrar este archivo específico del historial de la nube" style="display:none; border-color:rgba(228,0,43,0.5); color:var(--red); padding:7px 12px; font-size:11.5px;">
+          <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Eliminar Archivo Seleccionado
+        </button>
+
+        <select class="select-input" id="filterStatus">
+          <option value="ALL">Todos los Estados (Abiertos y Cerrados)</option>
+          <option value="ABIERTOS">Avisos Abiertos (MEAB)</option>
+          <option value="CERRADOS">Avisos Cerrados (MECE)</option>
+        </select>
+
+        <select class="select-input" id="filterClase">
+          <option value="ALL">Todas las Clases (ZA, ZM, M1, etc.)</option>
+        </select>
+
+        <select class="select-input" id="filterUbic">
+          <option value="ALL">Todos los Equipos</option>
+        </select>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por N.º de aviso, equipo, descripción..." style="width:280px;">
+      </div>
+    </div>
+
+    <!-- METRICAS KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="border-color: rgba(201, 162, 74, 0.45); background: linear-gradient(135deg, rgba(201, 162, 74, 0.12) 0%, rgba(23, 23, 26, 0.95) 100%);">
+        <div class="kpi-top">
+          <div class="kpi-ic" style="color:var(--gold);"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <span class="kpi-badge" style="background:rgba(201,162,74,0.15); color:var(--gold); border:1px solid rgba(201,162,74,0.3);">Inversión Histórica USD</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalCostHist" style="color:var(--gold); font-size:22px;">$0.00</div>
+        <div class="kpi-label" id="kpiTotalCostHistSub">Gasto acumulado en OTs</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-ic"><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <span class="kpi-badge badge-cyan">Histórico Total</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalHist">—</div>
+        <div class="kpi-label">Registros acumulados en sistema</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-ic"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <span class="kpi-badge badge-warn">MTBF (Averías ZA)</span>
+        </div>
+        <div class="kpi-value" id="kpiMTBF">—</div>
+        <div class="kpi-label" id="kpiMTBFSub">Tiempo Medio Entre Fallas ZA</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-ic"><svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+          <span class="kpi-badge badge-danger">Índice de Recurrencia</span>
+        </div>
+        <div class="kpi-value" id="kpiRecurrence">—</div>
+        <div class="kpi-label">Reincidencia en mismas ubicaciones</div>
+      </div>
+    </div>
+
+    <!-- SECCION DE GRAFICOS Y PREDICCION IA -->
+    <div class="grid-2">
+      <!-- GRAFICO HISTORICO Y TENDENCIA -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            Tendencia Histórica & Proyección de Mantenimientos
+            <span class="tag">AI Forecast</span>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="historyChart"></canvas>
+        </div>
+      </div>
+
+      <!-- MOTOR DE PREDICCION DE FALLAS (IA PREDICTIVA) -->
+      <div class="ai-prediction-card">
+        <div class="ai-badge">⚡ Algoritmo Predictivo IA</div>
+        <div class="ai-title">Predicción de Mantenimiento Preventivo</div>
+        <div class="ai-desc">Análisis inteligente basado en la frecuencia de avisos pasados e intensidad de falla por ubicación técnica.</div>
+        
+        <div id="aiPredictionsList">
+          <!-- Generado dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA DE HISTORIAL COMPLETO -->
+    <div class="panel-box">
+      <div class="panel-head">
+        <div class="panel-title">
+          Registro Histórico de Notificaciones SAP PM
+          <span class="tag" id="recordCountTag">Cargando base histórica...</span>
+        </div>
+      </div>
+
+      <div class="mobile-scroll-hint" style="display:none; align-items:center; gap:6px; font-size:10.5px; color:var(--gold); background:rgba(201,162,74,0.08); border:1px solid rgba(201,162,74,0.2); padding:8px 12px; border-radius:8px; margin-bottom:12px; font-family:var(--mono);">
+        <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M17 8l4 4-4 4M7 8l-4 4 4 4"/></svg>
+        Desliza horizontalmente para ver todas las columnas del historial
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>N.º de Aviso</th>
+              <th>N.º Orden (OT)</th>
+              <th>Descripción del Aviso</th>
+              <th>Clase</th>
+              <th>Equipo / Ubicación por Equipo</th>
+              <th>Status</th>
+              <th>Coste de la Orden (USD)</th>
+              <th>Fecha Creación</th>
+              <th>Notificador</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="9" style="text-align:center; color:var(--text-dim); padding:30px;">Cargando historial de avisos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let historicalRows = [];
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function withTimeout(promise, ms = 1000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de red')), ms))
+  ]);
+}
+
+let allBatchesMap = {};
+let allHistoricalNotices = [];
+
+async function loadHistoricalData() {
+  let loadedFromCloud = false;
+  historicalRows = [];
+  allHistoricalNotices = [];
+  allBatchesMap = {};
+
+  try {
+    if (typeof _fbDb !== 'undefined') {
+      // 0. Verificar si la planta está en estado vacante (0 avisos / isEmpty)
+      const activeSnap = await withTimeout(_fbDb.collection('plant_data').doc('active_csv').get(), 2000);
+      if (activeSnap && activeSnap.exists && activeSnap.data().isEmpty) {
+        loadedFromCloud = true;
+        historicalRows = [];
+        allHistoricalNotices = [];
+        allBatchesMap = {};
+        const batchSelect = document.getElementById('selectUploadBatch');
+        if (batchSelect) batchSelect.innerHTML = '<option value="ALL_TIME">Historial Acumulado (0 cargas)</option>';
+        populateFilterDropdowns([]);
+        renderHistoricalView();
+        setupRealtimeListener();
+        return;
+      }
+
+      // 1. Intentar cargar todo el historial completo desde Firestore Cloud (upload_history)
+      const historySnap = await withTimeout(_fbDb.collection('upload_history').orderBy('uploadTimestamp', 'desc').get(), 3000);
+      if (historySnap && !historySnap.empty) {
+        allBatchesMap = {};
+        const batchOptions = ['<option value="ALL_TIME">Historial Acumulado (Todas las cargas de la planta)</option>'];
+
+        historySnap.forEach(doc => {
+          const data = doc.data();
+          const batchId = data.batchId || doc.id;
+          const dt = data.uploadTimestamp ? new Date(data.uploadTimestamp) : new Date();
+          const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          let parsedRows = [];
+          if (data.csvText) parsedRows = parseCSVText(data.csvText);
+
+          allBatchesMap[batchId] = {
+            batchId, fileName: data.fileName || 'Archivo_SAP.csv',
+            uploadTimestamp: data.uploadTimestamp || Date.now(),
+            rowsCount: data.rowsCount || parsedRows.length, rows: parsedRows
+          };
+          batchOptions.push(`<option value="${batchId}">${data.fileName || 'Archivo SAP'} — ${dtStr} (${parsedRows.length} avisos)</option>`);
+        });
+
+        const batchSelect = document.getElementById('selectUploadBatch');
+        if (batchSelect) batchSelect.innerHTML = batchOptions.join('');
+
+        const mergedHistMap = new Map();
+        Object.values(allBatchesMap).forEach(b => {
+          b.rows.forEach(r => {
+            if (r && r[0]) {
+              const id = String(r[0]).trim();
+              if (!mergedHistMap.has(id)) {
+                mergedHistMap.set(id, r);
+              }
+            }
+          });
+        });
+
+        allHistoricalNotices = Array.from(mergedHistMap.values());
+        if (allHistoricalNotices.length > 0) {
+          historicalRows = allHistoricalNotices;
+          loadedFromCloud = true;
+        }
+      }
+
+      // 2. Si upload_history estaba vacío, intentar cargar desde plant_data/active_csv
+      if (!loadedFromCloud && activeSnap && activeSnap.exists) {
+        const dData = activeSnap.data();
+        if (dData && dData.csvText && !dData.isEmpty) {
+          historicalRows = parseCSVText(dData.csvText);
+          allHistoricalNotices = historicalRows;
+          if (historicalRows.length > 0) loadedFromCloud = true;
+        }
+      }
+    }
+  } catch(cloudErr) {
+    console.warn('Historial cloud query note:', cloudErr.message);
+  }
+
+  // 3. Fallback LocalStorage
+  if (!loadedFromCloud || historicalRows.length === 0) {
+    let rawText = '';
+    try {
+      const localCsv = localStorage.getItem('cocacola_active_csv');
+      if (localCsv && localCsv.trim().length > 0) rawText = localCsv;
+    } catch(e) {}
+
+    if (rawText) {
+      historicalRows = parseCSVText(rawText);
+      allHistoricalNotices = historicalRows;
+      if (historicalRows.length > 0) loadedFromCloud = true;
+    }
+  }
+
+  // 4. Fallback DBMANTTO.csv
+  if (!loadedFromCloud || historicalRows.length === 0) {
+    try {
+      const res = await fetch('DBMANTTO.csv?t=' + Date.now());
+      if (res.ok) {
+        const rawText = await res.text();
+        if (rawText) {
+          historicalRows = parseCSVText(rawText);
+          allHistoricalNotices = historicalRows;
+          if (historicalRows.length > 0) loadedFromCloud = true;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 5. Fallback Dataset Embebido Centralizado (plant-data-source.js)
+  if (!loadedFromCloud || historicalRows.length === 0) {
+    if (typeof window.DEFAULT_EMBEDDED_CSV === 'string' && window.DEFAULT_EMBEDDED_CSV.length > 0) {
+      try {
+        historicalRows = parseCSVText(window.DEFAULT_EMBEDDED_CSV);
+        allHistoricalNotices = historicalRows;
+      } catch(e) {}
+    }
+  }
+
+  const batchSelect = document.getElementById('selectUploadBatch');
+  if (batchSelect && (!batchSelect.options || batchSelect.options.length <= 1)) {
+    batchSelect.innerHTML = `<option value="ALL_TIME">📜 Historial Activo de Planta (${historicalRows.length} avisos)</option>`;
+  }
+
+  populateFilterDropdowns(historicalRows);
+  renderHistoricalView();
+  setupRealtimeListener();
+}
+
+function setupRealtimeListener() {
+  if (typeof _fbDb !== 'undefined') {
+    try {
+      _fbDb.collection('upload_history').onSnapshot(snap => {
+        if (snap && !snap.empty) {
+          loadHistoricalData();
+        }
+      }, err => {});
+    } catch(e) {}
+  }
+}
+
+function parseCSVText(text) {
+  if (!text || typeof text !== 'string') return [];
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  let delim = ';';
+  const sample = lines.slice(0, 5).join('\n');
+  if (sample.includes(';')) delim = ';';
+  else if (sample.includes('\t')) delim = '\t';
+  else if (sample.includes(',')) delim = ',';
+
+  let headerIndex = 0;
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const cols = lines[i].split(delim).map(c => c.toLowerCase().trim());
+    if (cols.some(c => c.includes('aviso') || c.includes('notif') || c.includes('descrip') || c.includes('ubicac') || c.includes('status'))) {
+      headerIndex = i;
+      break;
+    }
+  }
+
+  const headers = lines[headerIndex].split(delim).map(h => h.trim().replace(/^["']|["']$/g, ''));
+  
+  const iAviso  = headers.findIndex(h => { const l = h.toLowerCase(); return (l.includes('aviso') || l.includes('notif') || l.includes('n.º') || l.includes('n°') || l.includes('id')) && !l.includes('clase') && !l.includes('fecha') && !l.includes('autor') && !l.includes('tipo'); });
+  let iDesc   = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('descrip') || l.includes('texto') || l.includes('titulo'); });
+  if (iDesc < 0) {
+    iDesc = headers.findIndex(h => h.toLowerCase().includes('denominac'));
+  }
+  const iClase  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('clase') || l.includes('tipo') || l.includes('cat'); });
+  const iEquipo = headers.findIndex(h => { const l = h.toLowerCase(); return l === 'equipo' || l.includes('nº equipo') || l.includes('cod equipo'); });
+  const iDenom  = headers.findIndex((h, idx) => idx !== iDesc && h.toLowerCase().includes('denominac'));
+  const iUbic   = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('ubicac') || l.includes('tecnic') || l.includes('técnic'); });
+  const iStatus = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('status') || l.includes('estado') || l.includes('est'); });
+  const iCreado = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('cread') || l.includes('fecha'); });
+  const iAutor  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('autor') || l.includes('notificad') || l.includes('user') || l.includes('usuario'); });
+
+  const iCierre = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('cierre') || l.includes('fin'); });
+  const iOrden  = headers.findIndex(h => { const l = h.toLowerCase(); return (l.includes('orden') || l.includes('ot') || l.includes('order')) && !l.includes('clase'); });
+  const iCosto  = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('costo') || l.includes('importe') || l.includes('gasto') || l.includes('monto') || l.includes('valor'); });
+  const iMoneda = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('moneda') || l.includes('currency'); });
+
+  const idxAviso  = iAviso >= 0 ? iAviso : (headers.length > 7 ? 7 : 0);
+  const idxDesc   = iDesc >= 0 ? iDesc : (headers.length > 10 ? 10 : 1);
+  const idxClase  = iClase >= 0 ? iClase : 0;
+  const idxEquipo = iEquipo >= 0 ? iEquipo : 3;
+  const idxDenom  = iDenom >= 0 ? iDenom : 2;
+  const idxUbic   = iUbic >= 0 ? iUbic : 1;
+  const idxStatus = iStatus >= 0 ? iStatus : (headers.length > 12 ? 12 : 4);
+  const idxCreado = iCreado >= 0 ? iCreado : 5;
+  const idxAutor  = iAutor >= 0 ? iAutor : (headers.length > 9 ? 9 : 6);
+  const idxCierre = iCierre >= 0 ? iCierre : (headers.length > 13 ? 13 : -1);
+  const idxOrden  = iOrden >= 0 ? iOrden : (headers.length > 8 ? 8 : -1);
+  const idxCosto  = iCosto >= 0 ? iCosto : (headers.length > 14 ? 14 : -1);
+  const idxMoneda = iMoneda >= 0 ? iMoneda : (headers.length > 15 ? 15 : -1);
+
+  const orderCostMap = new Map();
+  if (headers.length >= 17) {
+    let costOrdIdx = -1, costValIdx = -1;
+    headers.forEach((h, idx) => {
+      const l = h.toLowerCase();
+      if (idx >= 14 && (l.includes('orden') || l.includes('ot'))) costOrdIdx = idx;
+      if (idx >= 14 && (l.includes('importe') || l.includes('costo') || l.includes('gasto') || l.includes('monto'))) costValIdx = idx;
+    });
+
+    if (costOrdIdx >= 0 && costValIdx >= 0) {
+      lines.slice(headerIndex + 1).forEach(line => {
+        const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
+        const ord = (cols[costOrdIdx] || '').trim();
+        const rawCost = parseFloat((cols[costValIdx] || '0').replace(/,/g, ''));
+        if (ord && !isNaN(rawCost)) {
+          orderCostMap.set(ord, (orderCostMap.get(ord) || 0) + rawCost);
+        }
+      });
+    }
+  }
+
+  return lines.slice(headerIndex + 1).map(line => {
+    const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
+    const valAviso = (cols[idxAviso] || cols[0] || '').trim();
+    if (!valAviso || valAviso === '—' || valAviso.toLowerCase().includes('aviso') || valAviso.toLowerCase().includes('n.º')) return null;
+
+    const eqVal = (cols[idxEquipo] || '').trim();
+    let denomEq = '';
+    if (idxEquipo >= 0 && cols[idxEquipo + 1] && idxEquipo + 1 !== idxDesc) {
+      denomEq = (cols[idxEquipo + 1] || '').trim();
+    }
+    if (!denomEq || denomEq === '—') {
+      denomEq = (cols[idxDenom] || '').trim();
+    }
+    const ubicVal = (cols[idxUbic] || '').trim();
+    let denomUbic = (cols[2] || '').trim();
+    if (!denomUbic || denomUbic === denomEq) denomUbic = ubicVal;
+
+    let equipoUbicStr = '—';
+    if (eqVal && eqVal !== '—') {
+      if (denomEq && denomEq !== '—' && denomEq !== eqVal) {
+        equipoUbicStr = `${eqVal} · ${denomEq}`;
+      } else {
+        equipoUbicStr = `${eqVal} (${ubicVal || 'Planta'})`;
+      }
+    } else if (denomEq && denomEq !== '—') {
+      equipoUbicStr = denomEq;
+    } else if (ubicVal && ubicVal !== '—') {
+      equipoUbicStr = ubicVal;
+    }
+
+    const valCierre = idxCierre >= 0 ? (cols[idxCierre] || '').trim() : '';
+    const valOrden  = idxOrden >= 0 ? (cols[idxOrden] || '—').trim() || '—' : '—';
+
+    let valCosto = 0.0;
+    if (idxCosto >= 0 && cols[idxCosto]) {
+      const parsedNum = parseFloat(cols[idxCosto].replace(/,/g, ''));
+      if (!isNaN(parsedNum)) valCosto = parsedNum;
+    } else if (valOrden && orderCostMap.has(valOrden)) {
+      valCosto = orderCostMap.get(valOrden);
+    }
+
+    const valMoneda = idxMoneda >= 0 && cols[idxMoneda] ? cols[idxMoneda].trim() : 'USD';
+
+    return [
+      valAviso,
+      (cols[idxDesc] || '—').trim() || '—',
+      (cols[idxClase] || 'ZA').trim() || 'ZA',
+      equipoUbicStr,
+      (cols[idxStatus] || 'MEAB').trim() || 'MEAB',
+      (cols[idxCreado] || '—').trim() || '—',
+      (cols[idxAutor] || '—').trim() || '—',
+      valCierre,
+      valOrden,
+      ubicVal,
+      denomUbic,
+      eqVal,
+      denomEq,
+      valCosto,
+      valMoneda
+    ];
+  }).filter(Boolean);
+}
+
+function populateFilterDropdowns(rows) {
+  const fClase = document.getElementById('filterClase');
+  const fUbic = document.getElementById('filterUbic');
+
+  const clases = new Set(rows.map(r => r[2]).filter(Boolean));
+  const ubics = new Set(rows.map(r => r[3]).filter(Boolean));
+
+  if (fClase) {
+    fClase.innerHTML = '<option value="ALL">Todas las Clases (ZA, ZM, M1, etc.)</option>' +
+      Array.from(clases).sort().map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+  if (fUbic) {
+    fUbic.innerHTML = '<option value="ALL">Todos los Equipos / Ubicaciones</option>' +
+      Array.from(ubics).sort().map(u => `<option value="${u}">${u}</option>`).join('');
+  }
+}
+
+function renderHistoricalView() {
+  const statusFilter = document.getElementById('filterStatus').value;
+  const claseFilter = document.getElementById('filterClase').value;
+  const ubicFilter = document.getElementById('filterUbic').value;
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  let filtered = historicalRows.filter(r => {
+    const isAbierto = !String(r[4]).includes('MECE') && !String(r[4]).toLowerCase().includes('cerr');
+    if (statusFilter === 'ABIERTOS' && !isAbierto) return false;
+    if (statusFilter === 'CERRADOS' && isAbierto) return false;
+
+    if (claseFilter !== 'ALL' && r[2] !== claseFilter) return false;
+    if (ubicFilter !== 'ALL' && r[3] !== ubicFilter) return false;
+
+    if (search) {
+      const match = r.some(col => String(col).toLowerCase().includes(search));
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  // 1. KPI Calculation
+  const total = filtered.length;
+  document.getElementById('kpiTotalHist').textContent = total.toLocaleString();
+
+  // Inversión Total Histórica
+  const totalCost = filtered.reduce((acc, r) => {
+    const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+    return acc + c;
+  }, 0);
+  const countWithCost = filtered.filter(r => (typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, ''))) > 0).length;
+
+  const kpiTotalCostHist = document.getElementById('kpiTotalCostHist');
+  const kpiTotalCostHistSub = document.getElementById('kpiTotalCostHistSub');
+  if (kpiTotalCostHist) {
+    kpiTotalCostHist.textContent = `$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (kpiTotalCostHistSub) {
+    kpiTotalCostHistSub.textContent = `Acumulado en ${countWithCost} OTs con costo`;
+  }
+
+  // MTBF Calculation (Avisos de Parada ZA)
+  const zaCount = filtered.filter(r => String(r[2] || '').toUpperCase().includes('ZA')).length;
+  const mtbfVal = zaCount > 0 ? Math.round(5760 / zaCount) : 5760;
+  document.getElementById('kpiMTBF').textContent = `${mtbfVal} hrs`;
+  const kpiMTBFSub = document.getElementById('kpiMTBFSub');
+  if (kpiMTBFSub) {
+    kpiMTBFSub.textContent = zaCount > 0 ? `~${(mtbfVal / 24).toFixed(1)}d entre paradas (${zaCount} averías ZA)` : `0 paradas ZA en histórico`;
+  }
+
+  // Recurrence Index
+  const ubicMap = {};
+  filtered.forEach(r => { if(r[3] && r[3]!=='—') ubicMap[r[3]] = (ubicMap[r[3]]||0)+1; });
+  const repeatCount = Object.values(ubicMap).filter(v => v > 1).length;
+  const totalUbics = Object.keys(ubicMap).length;
+  const recurrencePct = totalUbics > 0 ? Math.round((repeatCount / totalUbics) * 100) : 0;
+  document.getElementById('kpiRecurrence').textContent = `${recurrencePct}%`;
+
+  // 2. Render Table
+  const tbody = document.getElementById('historyTableBody');
+  document.getElementById('recordCountTag').textContent = `${total} registros filtrados · $${totalCost.toLocaleString('en-US', {minimumFractionDigits:2})} USD`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-dim); padding:30px;">No se encontraron avisos que coincidan con los filtros seleccionados.</td></tr>';
+  } else {
+    tbody.innerHTML = filtered.slice(0, 100).map(r => {
+      const isCerrado = String(r[4]).includes('MECE') || String(r[4]).toLowerCase().includes('cerr');
+      const badgeClass = isCerrado ? 'status-cerrado' : 'status-abierto';
+      const statusLabel = isCerrado ? 'MECE (Cerrado)' : 'MEAB (Abierto)';
+      const cat = extractNoticeCategory(r[1]);
+
+      const ordenStr = r[8] && r[8] !== '—'
+        ? `<span style="font-family:var(--mono); font-size:12px; font-weight:700; color:var(--cyan); background:rgba(0,210,255,0.08); border:1px solid rgba(0,210,255,0.25); padding:2px 8px; border-radius:5px; white-space:nowrap;">OT #${r[8]}</span>`
+        : `<span style="font-family:var(--mono); font-size:11px; color:var(--text-faint);">Sin Orden</span>`;
+
+      const costo = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+      const costoBadge = costo > 0
+        ? `<span style="font-family:var(--mono); font-size:12px; font-weight:700; color:var(--gold); background:rgba(201,162,74,0.12); border:1px solid rgba(201,162,74,0.35); padding:3px 9px; border-radius:6px; white-space:nowrap;">$${costo.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>`
+        : `<span style="font-family:var(--mono); font-size:11px; color:var(--text-faint);">$0.00</span>`;
+
+      return `
+        <tr>
+          <td>
+            <div style="font-family:var(--mono); font-weight:700; color:var(--gold); font-size:13px;">${r[0]}</div>
+          </td>
+          <td>${ordenStr}</td>
+          <td style="max-width:320px; font-size:12.5px;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:5px; background:${cat.bg}; color:${cat.color}; border:1px solid ${cat.border}; font-weight:600; white-space:nowrap;" title="${cat.fullLabel}">${cat.icon} ${cat.code} · ${cat.label}</span>
+              <span>${cat.cleanDesc}</span>
+            </div>
+          </td>
+          <td><span class="status-pill status-proceso">${r[2]}</span></td>
+          <td style="font-family:var(--mono); font-size:12px;">${r[3]}</td>
+          <td><span class="status-pill ${badgeClass}">${statusLabel}</span></td>
+          <td>${costoBadge}</td>
+          <td style="font-size:12px; color:var(--text-dim);">${r[5]}</td>
+          <td style="font-size:12px;">${r[6]}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // 3. Render Chart
+  renderHistoryChart(filtered);
+
+  // 4. Render AI Predictions
+  renderAIPredictions(ubicMap);
+}
+
+function extractNoticeCategory(descStr) {
+  if (!descStr) return { code: 'GEN', label: 'GENERAL', fullLabel: 'GENERAL / OPERATIVO', icon: '⚙️', color: '#8B8990', bg: 'rgba(139,137,144,0.12)', border: 'rgba(139,137,144,0.3)', cleanDesc: '—' };
+
+  const raw = String(descStr).trim();
+  const upper = raw.toUpperCase();
+
+  let code = 'GEN';
+  let label = 'GENERAL';
+  let fullLabel = 'MANTENIMIENTO GENERAL';
+  let icon = '⚙️';
+  let color = '#8B8990';
+  let bg = 'rgba(139,137,144,0.12)';
+  let border = 'rgba(139,137,144,0.3)';
+  let cleanDesc = raw;
+
+  if (raw.includes('|')) {
+    const parts = raw.split('|');
+    const prefix = parts[0].trim().toUpperCase();
+    cleanDesc = parts.slice(1).join('|').trim();
+
+    if (prefix === 'MA' || prefix.includes('MEDIO') || prefix.includes('AMBIENTE')) {
+      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+    } else if (prefix === 'SEG' || prefix.includes('SEGURID')) {
+      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+    } else if (prefix === 'CI' || prefix.includes('INSEGURA')) {
+      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+    } else if (prefix === 'HER' || prefix.includes('HERRAMIENT')) {
+      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+    } else if (prefix === 'RQ' || prefix.includes('REQUERIMIEN')) {
+      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    }
+  } else {
+    if (/^(MA[:\s-]|MEDIO\s+AMBIENTE)/i.test(upper) || upper.includes('MEDIO AMBIENTE')) {
+      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+    } else if (/^(SEG[:\s-]|SEGURIDAD)/i.test(upper) || upper.includes('SEGURIDAD')) {
+      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+    } else if (/^(CI[:\s-]|CONDICION\s+INSEGURA|CONDICIÓN\s+INSEGURA)/i.test(upper) || upper.includes('CONDICION INSEGURA') || upper.includes('CONDICIÓN INSEGURA')) {
+      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+    } else if (/^(HER[:\s-]|HERRAMIENTA)/i.test(upper) || upper.includes('HERRAMIENTA')) {
+      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+    } else if (/^(RQ[:\s-]|REQUERIMIENTO)/i.test(upper) || upper.includes('REQUERIMIENTO')) {
+      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    }
+  }
+
+  return { code, label, fullLabel, icon, color, bg, border, cleanDesc };
+}
+
+function parseMonthYearKey(dateStr) {
+  if (!dateStr || dateStr === '—' || dateStr.toLowerCase().includes('fecha')) return null;
+  const str = String(dateStr).trim();
+
+  // Caso YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.split('-');
+    return { key: `${parts[0]}-${parts[1]}`, label: `${getMonthAbbr(parts[1])} ${parts[0]}`, sortVal: parseInt(parts[0]+parts[1]) };
+  }
+
+  // Caso DD.MM.YYYY o DD/MM/YYYY
+  const parts = str.split(/[.\/-]/);
+  if (parts.length >= 3) {
+    let day = parseInt(parts[0]);
+    let month = parseInt(parts[1]);
+    let year = parseInt(parts[2]);
+
+    if (year < 100) year += 2000;
+
+    if (month > 12 && day <= 12) {
+      const temp = day;
+      day = month;
+      month = temp;
+    }
+
+    if (month >= 1 && month <= 12 && year > 2000) {
+      const mStr = String(month).padStart(2, '0');
+      return { key: `${year}-${mStr}`, label: `${getMonthAbbr(mStr)} ${year}`, sortVal: parseInt(`${year}${mStr}`) };
+    }
+  }
+  return null;
+}
+
+function getMonthAbbr(m) {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const idx = parseInt(m) - 1;
+  return months[idx] || m;
+}
+
+let historyChartInstance = null;
+function renderHistoryChart(rows) {
+  const ctx = document.getElementById('historyChart');
+  if (!ctx) return;
+
+  // Agrupar por Año-Mes y estado (Abierto vs Cerrado)
+  const monthData = {};
+
+  rows.forEach(r => {
+    const dateInfo = parseMonthYearKey(r[5]);
+    if (!dateInfo) return;
+
+    const key = dateInfo.key;
+    if (!monthData[key]) {
+      monthData[key] = { label: dateInfo.label, sortVal: dateInfo.sortVal, abiertos: 0, cerrados: 0, total: 0 };
+    }
+    const isCerrado = String(r[4] || '').includes('MECE') || String(r[4] || '').toLowerCase().includes('cerr');
+    if (isCerrado) monthData[key].cerrados++;
+    else monthData[key].abiertos++;
+    monthData[key].total++;
+  });
+
+  // Ordenar cronológicamente
+  const sortedMonths = Object.values(monthData).sort((a, b) => a.sortVal - b.sortVal).slice(-10);
+
+  let labels = sortedMonths.map(m => m.label);
+  let abiertosVals = sortedMonths.map(m => m.abiertos);
+  let cerradosVals = sortedMonths.map(m => m.cerrados);
+
+  // Fallback si no hay suficientes fechas
+  if (labels.length === 0) {
+    labels = ['Ene 2026', 'Feb 2026', 'Mar 2026', 'Abr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Ago 2026'];
+    abiertosVals = [5, 8, 12, 10, 15, 14, 18, rows.length || 20];
+    cerradosVals = [10, 15, 20, 22, 25, 28, 30, 35];
+  }
+
+  if (historyChartInstance) {
+    historyChartInstance.data.labels = labels;
+    historyChartInstance.data.datasets[0].data = abiertosVals;
+    historyChartInstance.data.datasets[1].data = cerradosVals;
+    historyChartInstance.update();
+    return;
+  }
+
+  historyChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Avisos Abiertos',
+          data: abiertosVals,
+          borderColor: '#E4002B',
+          backgroundColor: 'rgba(228, 0, 43, 0.12)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#E4002B',
+          pointBorderColor: '#FFF',
+          pointRadius: 4,
+          borderWidth: 2
+        },
+        {
+          label: 'Avisos Cerrados',
+          data: cerradosVals,
+          borderColor: '#3D9D6B',
+          backgroundColor: 'rgba(61, 157, 107, 0.12)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#3D9D6B',
+          pointBorderColor: '#FFF',
+          pointRadius: 4,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 350,
+        easing: 'easeOutQuart'
+      },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#F2F1EE', font: { family: 'Poppins', size: 11 } }
+        },
+        tooltip: {
+          backgroundColor: '#1C1C1F',
+          titleColor: '#C9A24A',
+          bodyColor: '#F2F1EE',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'JetBrains Mono', size: 10 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'JetBrains Mono', size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderAIPredictions(ubicMap) {
+  const container = document.getElementById('aiPredictionsList');
+  if (!container) return;
+
+  const sortedUbics = Object.entries(ubicMap).sort((a,b) => b[1] - a[1]).slice(0, 3);
+
+  if (sortedUbics.length === 0) {
+    container.innerHTML = '<div style="font-size:12px; color:var(--text-dim);">Esperando suficientes datos para generar modelo predictivo de mantenimientos.</div>';
+    return;
+  }
+
+  container.innerHTML = sortedUbics.map(([ubic, count]) => {
+    const riskPct = Math.min(98, Math.round(count * 18 + 40));
+    const riskColor = riskPct > 75 ? 'var(--red)' : 'var(--gold)';
+    const nextDays = Math.max(2, Math.round(30 / (count + 1)));
+
+    return `
+      <div class="pred-item">
+        <div>
+          <div class="pred-loc">${ubic}</div>
+          <div class="pred-sub">Revisión recomendada en aprox. <strong>${nextDays} días</strong></div>
+        </div>
+        <div class="pred-risk" style="color:${riskColor};">${riskPct}% Riesgo</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function deleteSingleBatch(batchId) {
+  if (!batchId || batchId === 'ALL_TIME') {
+    alert('Por favor seleccione un archivo específico para eliminar.');
+    return;
+  }
+
+  const batchInfo = allBatchesMap[batchId];
+  const fileName = batchInfo ? batchInfo.fileName : batchId;
+
+  if (!confirm(`⚠️ ATENCIÓN MASTER: ¿Está seguro de eliminar PERMANENTEMENTE el archivo "${fileName}" y todos sus avisos asociados del historial de la nube?`)) {
+    return;
+  }
+
+  if (typeof _fbDb === 'undefined') return;
+
+  try {
+    // 1. Eliminar documento de upload_history
+    await _fbDb.collection('upload_history').doc(batchId).delete();
+
+    // 2. Eliminar avisos asociados de avisos_historico
+    const snap = await _fbDb.collection('avisos_historico').get();
+    const deletePromises = [];
+    snap.forEach(doc => {
+      if (doc.id.startsWith(batchId) || doc.data().batchId === batchId) {
+        deletePromises.push(doc.ref.delete());
+      }
+    });
+    await Promise.all(deletePromises);
+
+    // 3. Si era el activo, actualizar plant_data/active_csv
+    const activeSnap = await _fbDb.collection('plant_data').doc('active_csv').get();
+    if (activeSnap && activeSnap.exists && activeSnap.data().activeBatchId === batchId) {
+      const remainingSnap = await _fbDb.collection('upload_history').orderBy('uploadTimestamp', 'desc').get();
+      if (!remainingSnap.empty) {
+        const nextBatch = remainingSnap.docs[0].data();
+        await _fbDb.collection('plant_data').doc('active_csv').set({
+          activeBatchId: nextBatch.batchId,
+          csvText: nextBatch.csvText,
+          updatedAt: nextBatch.uploadTimestamp,
+          fileName: nextBatch.fileName,
+          rowsCount: nextBatch.rowsCount
+        });
+      } else {
+        const defaultRows = parseCSVText(DEFAULT_EMBEDDED_CSV);
+        await _fbDb.collection('plant_data').doc('active_csv').set({
+          csvText: DEFAULT_EMBEDDED_CSV,
+          updatedAt: Date.now(),
+          fileName: 'DBMANTTO.csv',
+          rowsCount: defaultRows.length
+        });
+      }
+    }
+
+    showToast(`🗑️ Archivo "${fileName}" eliminado del historial.`);
+    setTimeout(() => loadHistoricalData(), 600);
+  } catch (err) {
+    console.error('Error al eliminar archivo:', err);
+    alert('❌ Error al eliminar archivo: ' + err.message);
+  }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  // Precarga instantánea sincrónica si los datos ya están disponibles
+  if (typeof window.DEFAULT_EMBEDDED_CSV === 'string' && historicalRows.length === 0) {
+    try {
+      historicalRows = parseCSVText(window.DEFAULT_EMBEDDED_CSV);
+      allHistoricalNotices = historicalRows;
+      const batchSelectEl = document.getElementById('selectUploadBatch');
+      if (batchSelectEl) {
+        batchSelectEl.innerHTML = `<option value="ALL_TIME">📜 Historial Activo de Planta (${historicalRows.length} avisos)</option>`;
+      }
+      populateFilterDropdowns(historicalRows);
+      renderHistoricalView();
+    } catch(e) {}
+  }
+
+  loadHistoricalData();
+
+  const batchSelect = document.getElementById('selectUploadBatch');
+  const deleteBtn = document.getElementById('deleteBatchBtn');
+
+  if (batchSelect) {
+    batchSelect.addEventListener('change', (e) => {
+      const selectedBatch = e.target.value;
+      if (deleteBtn) {
+        deleteBtn.style.display = (selectedBatch && selectedBatch !== 'ALL_TIME') ? 'inline-flex' : 'none';
+      }
+      if (selectedBatch === 'ALL_TIME') {
+        historicalRows = allHistoricalNotices.length > 0 ? allHistoricalNotices : historicalRows;
+      } else if (allBatchesMap[selectedBatch]) {
+        historicalRows = allBatchesMap[selectedBatch].rows;
+      }
+      populateFilterDropdowns(historicalRows);
+      renderHistoricalView();
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', () => {
+      const selectedBatch = batchSelect ? batchSelect.value : null;
+      if (!selectedBatch || selectedBatch === 'ALL_TIME') {
+        alert('Seleccione un archivo específico para eliminar.');
+        return;
+      }
+      deleteSingleBatch(selectedBatch);
+    });
+  }
+
+  document.getElementById('filterStatus').addEventListener('change', renderHistoricalView);
+  document.getElementById('filterClase').addEventListener('change', renderHistoricalView);
+  document.getElementById('filterUbic').addEventListener('change', renderHistoricalView);
+  document.getElementById('searchInput').addEventListener('input', renderHistoricalView);
+
+  // Responsive Menu con Backdrop Overlay
+  const menuBtn = document.getElementById('menuBtn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  const closeMenu = () => {
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+  };
+
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('active');
+      if (overlay) overlay.classList.toggle('active');
+    });
+
+    sidebar.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeMenu);
+  }
+
+  // Export Excel
+  document.getElementById('exportHistoryExcelBtn').addEventListener('click', () => {
+    if (historicalRows.length === 0) {
+      alert('No hay datos históricos para exportar.');
+      return;
+    }
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['N.º de Aviso', 'Descripción Breve', 'Clase de Aviso', 'Ubicación Técnica', 'Status Sistema', 'Fecha de Creación', 'Notificador'],
+      ...historicalRows
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historial_Avisos");
+    XLSX.writeFile(wb, `Historial_Avisos_CocaCola_${Date.now()}.xlsx`);
+    showToast('✅ Reporte Histórico exportado a Excel.');
+  });
+
+  // Export PDF / Print
+  document.getElementById('printReportBtn').addEventListener('click', () => {
+    window.print();
+  });
+});
+</script>
+</body>
+</html>
