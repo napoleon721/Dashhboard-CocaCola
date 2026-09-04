@@ -1,0 +1,32 @@
+[debug] [2026-09-04T03:25:32.819Z] ----------------------------------------------------------------------
+[debug] [2026-09-04T03:25:32.822Z] Command:       /Users/apple/.nvm/versions/node/v22.19.0/bin/node /Users/apple/.nvm/versions/node/v22.19.0/bin/firebase deploy --project cocacola-20d01 --only hosting
+[debug] [2026-09-04T03:25:32.822Z] CLI Version:   15.25.1
+[debug] [2026-09-04T03:25:32.822Z] Platform:      darwin
+[debug] [2026-09-04T03:25:32.822Z] Node Version:  v22.19.0
+[debug] [2026-09-04T03:25:32.822Z] Detected Agent: antigravity
+[debug] [2026-09-04T03:25:32.822Z] Time:          Thu Sep 03 2026 21:25:32 GMT-0600 (Central Standard Time)
+[debug] [2026-09-04T03:25:32.823Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-04T03:25:33.655Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-04T03:25:33.655Z] > authorizing via signed-in user (napolitanox721@gmail.com)
+[debug] [2026-09-04T03:25:33.655Z] [iam] checking project cocacola-20d01 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-09-04T03:25:33.664Z] Checked if tokens are valid: true, expires at: 1788495295966
+[debug] [2026-09-04T03:25:33.664Z] Checked if tokens are valid: true, expires at: 1788495295966
+[debug] [2026-09-04T03:25:33.664Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/cocacola-20d01:testIamPermissions [none]
+[debug] [2026-09-04T03:25:33.664Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/cocacola-20d01:testIamPermissions  x-goog-user-project=cocacola-20d01
+[debug] [2026-09-04T03:25:33.664Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cocacola-20d01:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-09-04T03:25:34.193Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/cocacola-20d01:testIamPermissions 403
+[debug] [2026-09-04T03:25:34.193Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cocacola-20d01:testIamPermissions {"error":{"code":403,"message":"Caller does not have required permission to use project cocacola-20d01. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=cocacola-20d01 and then retry. Propagation of the new permission may take a few minutes.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"USER_PROJECT_DENIED","domain":"googleapis.com","metadata":{"consoleUrl":"https://console.developers.google.com/iam-admin/iam?project=cocacola-20d01","containerInfo":"cocacola-20d01","service":"cloudresourcemanager.googleapis.com","consumer":"projects/cocacola-20d01"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Caller does not have required permission to use project cocacola-20d01. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=cocacola-20d01 and then retry. Propagation of the new permission may take a few minutes."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developer console IAM admin","url":"https://console.developers.google.com/iam-admin/iam?project=cocacola-20d01"}]}]}}
+[debug] [2026-09-04T03:25:34.194Z] [iam] error while checking permissions, command may fail: Request to https://cloudresourcemanager.googleapis.com/v1/projects/cocacola-20d01:testIamPermissions had HTTP Error: 403, Caller does not have required permission to use project cocacola-20d01. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=cocacola-20d01 and then retry. Propagation of the new permission may take a few minutes.
+[debug] [2026-09-04T03:25:34.195Z] Checked if tokens are valid: true, expires at: 1788495295966
+[debug] [2026-09-04T03:25:34.195Z] Checked if tokens are valid: true, expires at: 1788495295966
+[debug] [2026-09-04T03:25:34.195Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/cocacola-20d01 [none]
+[debug] [2026-09-04T03:25:34.784Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/cocacola-20d01 403
+[debug] [2026-09-04T03:25:34.784Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/cocacola-20d01 {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2026-09-04T03:25:34.785Z] Request to https://firebase.googleapis.com/v1beta1/projects/cocacola-20d01 had HTTP Error: 403, The caller does not have permission
+[debug] [2026-09-04T03:25:34.983Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/cocacola-20d01 had HTTP Error: 403, The caller does not have permission
+    at responseToError (/Users/apple/.nvm/versions/node/v22.19.0/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/Users/apple/.nvm/versions/node/v22.19.0/lib/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[error] 
+[error] Error: Failed to get Firebase project cocacola-20d01. Please make sure the project exists and your account has permission to access it.

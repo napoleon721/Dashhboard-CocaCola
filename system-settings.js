@@ -162,6 +162,15 @@
         font-size: 10px; font-family: var(--mono, monospace); padding: 2px 7px; border-radius: 4px;
         background: rgba(201,162,74,0.15); color: var(--gold, #C9A24A); border: 1px solid rgba(201,162,74,0.25);
       }
+
+      @media (max-width: 500px) {
+        .settings-card { border-radius: 14px; max-height: 95vh; }
+        .settings-header { padding: 14px 16px; }
+        .settings-body { padding: 14px 16px; }
+        .settings-footer { padding: 12px 16px; flex-direction: column-reverse; gap: 8px; }
+        .settings-footer button { width: 100%; justify-content: center; }
+        .settings-tabs-bar { padding: 8px 12px; }
+      }
     `;
     document.head.appendChild(style);
   }
