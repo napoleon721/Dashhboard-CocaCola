@@ -223,11 +223,12 @@
         budgets: budgets,
         benchmarks: benchmarks,
         year: 2026,
+        methodology: 'ZBB (Zero-Based Budgeting)',
         totalBudget: Object.values(budgets).reduce(function(a,b){ return a+(b||0); }, 0),
         totalBenchmark: Object.values(benchmarks).reduce(function(a,b){ return a+(b||0); }, 0),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: 'firebase-sync.js',
-        source: 'Excel Hoja2 - Presupuesto y Benchmark'
+        source: 'Excel Hoja2 - Presupuesto ZBB y Benchmark 2026'
       });
 
       try {
@@ -284,8 +285,9 @@
         if (Object.keys(budgets).length > 0) {
           await db.collection('plant_data').doc('budget_config').set({
             budgets: budgets, benchmarks: benchmarks, year: 2026,
+            methodology: 'ZBB (Zero-Based Budgeting)',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            source: 'plant-data-source.js auto-sync'
+            source: 'plant-data-source.js ZBB auto-sync'
           });
           try {
             localStorage.setItem('cocacola_monthly_budgets', JSON.stringify(budgets));

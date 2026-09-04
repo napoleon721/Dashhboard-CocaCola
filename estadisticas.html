@@ -562,15 +562,16 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 <div class="auth-modal-backdrop" id="budgetConfigModal">
   <div class="auth-modal-card" style="max-width:560px;">
     <div class="auth-modal-header">
-      <div class="auth-modal-title" style="color:var(--gold);">
+      <div class="auth-modal-title" style="color:var(--gold); display:flex; align-items:center; gap:8px;">
         <svg class="icon" viewBox="0 0 24 24" style="color:var(--gold);"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        ⚙️ Configurar Presupuesto Mensual (Budget USD)
+        <span>⚙️ Presupuesto ZBB Mensual (USD)</span>
+        <span style="font-size:10px; background:rgba(201,162,74,0.18); color:var(--gold); padding:2px 8px; border-radius:10px; border:1px solid rgba(201,162,74,0.35); font-weight:700;">Línea ZBB</span>
       </div>
       <button class="modal-close" id="btnCloseBudgetModal" style="background:transparent; border:none; color:var(--text-dim); font-size:22px; cursor:pointer; padding:0 6px;">&times;</button>
     </div>
     <div class="auth-modal-body">
       <div style="font-size:12px; color:var(--text-dim); line-height:1.4;">
-        Establezca los montos del <strong>Budget Mensual ($ USD)</strong> para comparar contra la inversión real ejecutada en órdenes de trabajo (OTs) y proyectar la tendencia financiera.
+        Ajuste los montos de la línea <strong>Presupuesto ZBB (Zero-Based Budgeting)</strong> y analice la variación mensual contra el <strong>Benchmark Histórico</strong> de planta.
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-top:10px; max-height:280px; overflow-y:auto; padding-right:6px;" id="budgetInputsGrid">
@@ -1352,24 +1353,24 @@ function renderParetoChart(rows) {
 
 // ============================================================================
 // SISTEMA DE PRESUPUESTOS (BUDGET MENSUAL) Y PROYECCIONES FINANCIERAS
-// Valores reales tomados de Hoja2 del Excel cargado por gestión
+// Valores reales de la Metodología ZBB (Hoja2, Fila 5 y 6 del Excel)
 // ============================================================================
 const DEFAULT_MONTHLY_BUDGETS = (window.MONTHLY_BUDGETS_2026 && Object.keys(window.MONTHLY_BUDGETS_2026).length > 0)
   ? window.MONTHLY_BUDGETS_2026
   : {
-      '2026-01': 9765.91, '2026-02': 3244.77, '2026-03': 5354.96,
-      '2026-04': 3106.73, '2026-05': 2870.08, '2026-06': 10177.51,
-      '2026-07': 6839.42, '2026-08': 4107.23, '2026-09': 3334.09,
-      '2026-10': 4383.31, '2026-11': 3032.24, '2026-12': 3783.75
+      '2026-01': 9765.91, '2026-02': 3901.55, '2026-03': 3901.55,
+      '2026-04': 4797.36, '2026-05': 3910.84, '2026-06': 4749.93,
+      '2026-07': 3901.55, '2026-08': 5600.05, '2026-09': 4334.09,
+      '2026-10': 5323.31, '2026-11': 5030.11, '2026-12': 4783.75
     };
 
 const DEFAULT_MONTHLY_BENCHMARKS = (window.MONTHLY_BENCHMARKS_2026 && Object.keys(window.MONTHLY_BENCHMARKS_2026).length > 0)
   ? window.MONTHLY_BENCHMARKS_2026
   : {
-      '2026-01': 894.82,  '2026-02': 6538.32, '2026-03': 0,
-      '2026-04': 4849.95, '2026-05': 8789.42, '2026-06': 125.84,
-      '2026-07': 4790.27, '2026-08': 6434.57, '2026-09': 3254.30,
-      '2026-10': 3220.26, '2026-11': 3170.23, '2026-12': 3138.60
+      '2026-01': 4828.21, '2026-02': 3390.59, '2026-03': 4230.55,
+      '2026-04': 4267.04, '2026-05': 3430.85, '2026-06': 3532.72,
+      '2026-07': 4294.75, '2026-08': 4013.70, '2026-09': 3218.14,
+      '2026-10': 3705.63, '2026-11': 3170.53, '2026-12': 3123.87
     };
 
 function getMonthlyBudgets() {
@@ -1545,7 +1546,7 @@ function renderMonthlyBudgetTrendChart(rows) {
         },
         {
           type: 'line',
-          label: 'Budget Asignado ($ USD)',
+          label: 'Presupuesto ZBB ($ USD)',
           data: budgetData,
           borderColor: '#C9A24A',
           backgroundColor: 'transparent',
@@ -1572,7 +1573,7 @@ function renderMonthlyBudgetTrendChart(rows) {
         },
         {
           type: 'line',
-          label: 'Benchmark Histórico ($ USD)',
+          label: 'Benchmark ZBB ($ USD)',
           data: benchmarkData,
           borderColor: '#9D4EDD',
           backgroundColor: 'rgba(157, 78, 221, 0.08)',
