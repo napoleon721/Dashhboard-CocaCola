@@ -20,6 +20,7 @@
 <script src="firebase-config.js"></script>
 <script src="plant-data-source.js"></script>
 <script src="system-settings.js"></script>
+<script src="firebase-sync.js"></script>
 <script>
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   const _fbStorage = firebase.storage();
@@ -300,6 +301,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <div class="greet">Indicadores de Disponibilidad (OEE), Tiempos Fallos (MTBF/MTTR), Regla Pareto 80/20 y Análisis por Categorías Especiales</div>
       </div>
       <div style="display:flex; gap:10px;">
+        <button class="btn" id="btnFirebaseSyncStats" data-action="firebase-sync" title="Sincronizar Cloud Firebase (Dataset 286 avisos y Presupuesto/Benchmark Hoja 2)" style="border-color:rgba(201,162,74,0.4); color:var(--gold);"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><polyline points="12 10 12 16 12 13"/></svg>Sincronizar Cloud</button>
         <button class="btn gold" id="exportStatsExcelBtn"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Exportar Reporte Excel</button>
         <button class="btn primary" onclick="window.print()"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir Reporte PDF</button>
         <button class="btn" id="globalSettingsBtn" title="Configuración del Sistema"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuración</button>
@@ -1350,21 +1352,25 @@ function renderParetoChart(rows) {
 
 // ============================================================================
 // SISTEMA DE PRESUPUESTOS (BUDGET MENSUAL) Y PROYECCIONES FINANCIERAS
+// Valores reales tomados de Hoja2 del Excel cargado por gestión
 // ============================================================================
-const DEFAULT_MONTHLY_BUDGETS = {
-  '2026-01': 7000,
-  '2026-02': 7000,
-  '2026-03': 7000,
-  '2026-04': 7000,
-  '2026-05': 7000,
-  '2026-06': 7000,
-  '2026-07': 7000,
-  '2026-08': 7000,
-  '2026-09': 7000,
-  '2026-10': 7000,
-  '2026-11': 7000,
-  '2026-12': 7000
-};
+const DEFAULT_MONTHLY_BUDGETS = (window.MONTHLY_BUDGETS_2026 && Object.keys(window.MONTHLY_BUDGETS_2026).length > 0)
+  ? window.MONTHLY_BUDGETS_2026
+  : {
+      '2026-01': 9765.91, '2026-02': 3244.77, '2026-03': 5354.96,
+      '2026-04': 3106.73, '2026-05': 2870.08, '2026-06': 10177.51,
+      '2026-07': 6839.42, '2026-08': 4107.23, '2026-09': 3334.09,
+      '2026-10': 4383.31, '2026-11': 3032.24, '2026-12': 3783.75
+    };
+
+const DEFAULT_MONTHLY_BENCHMARKS = (window.MONTHLY_BENCHMARKS_2026 && Object.keys(window.MONTHLY_BENCHMARKS_2026).length > 0)
+  ? window.MONTHLY_BENCHMARKS_2026
+  : {
+      '2026-01': 894.82,  '2026-02': 6538.32, '2026-03': 0,
+      '2026-04': 4849.95, '2026-05': 8789.42, '2026-06': 125.84,
+      '2026-07': 4790.27, '2026-08': 6434.57, '2026-09': 3254.30,
+      '2026-10': 3220.26, '2026-11': 3170.23, '2026-12': 3138.60
+    };
 
 function getMonthlyBudgets() {
   try {
@@ -1374,12 +1380,34 @@ function getMonthlyBudgets() {
   return { ...DEFAULT_MONTHLY_BUDGETS };
 }
 
+function getMonthlyBenchmarks() {
+  try {
+    const saved = localStorage.getItem('cocacola_monthly_benchmarks');
+    if (saved) return JSON.parse(saved);
+  } catch(e){}
+  return { ...DEFAULT_MONTHLY_BENCHMARKS };
+}
+
 function saveMonthlyBudgets(budgets) {
   try {
     localStorage.setItem('cocacola_monthly_budgets', JSON.stringify(budgets));
     if (typeof _fbDb !== 'undefined') {
       _fbDb.collection('plant_data').doc('budget_config').set({
         budgets: budgets,
+        benchmarks: getMonthlyBenchmarks(),
+        updatedAt: Date.now()
+      }).catch(()=>{});
+    }
+  } catch(e){}
+}
+
+function saveMonthlyBenchmarks(benchmarks) {
+  try {
+    localStorage.setItem('cocacola_monthly_benchmarks', JSON.stringify(benchmarks));
+    if (typeof _fbDb !== 'undefined') {
+      _fbDb.collection('plant_data').doc('budget_config').set({
+        budgets: getMonthlyBudgets(),
+        benchmarks: benchmarks,
         updatedAt: Date.now()
       }).catch(()=>{});
     }
@@ -1390,18 +1418,27 @@ function populateBudgetModalInputs() {
   const grid = document.getElementById('budgetInputsGrid');
   if (!grid) return;
 
-  const budgets = getMonthlyBudgets();
+  const budgets    = getMonthlyBudgets();
+  const benchmarks = getMonthlyBenchmarks();
   const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
   grid.innerHTML = monthFullNames.map((name, idx) => {
-    const key = `2026-${String(idx + 1).padStart(2, '0')}`;
-    const val = budgets[key] || 7000;
+    const key  = `2026-${String(idx + 1).padStart(2, '0')}`;
+    const val  = budgets[key] || 0;
+    const bval = benchmarks[key] || 0;
+    const diff = val - bval;
+    const diffColor = diff >= 0 ? '#3D9D6B' : '#E4002B';
+    const diffSign  = diff >= 0 ? '+' : '';
     return `
       <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
         <label style="font-size:11px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:3px;">${name} 2026</label>
-        <div style="display:flex; align-items:center; gap:4px;">
+        <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
           <span style="color:var(--gold); font-size:12px; font-weight:700;">$</span>
           <input type="number" class="budget-month-input" data-key="${key}" value="${val}" style="width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:5px; color:var(--text); padding:4px 8px; font-family:var(--mono); font-size:12px; font-weight:600;" />
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:10px; color:#9D4EDD;">Benchmark: $${bval.toLocaleString('en-US',{minimumFractionDigits:2})}</span>
+          <span style="font-size:10px; color:${diffColor}; font-weight:600;">${diffSign}$${Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2})}</span>
         </div>
       </div>
     `;
@@ -1422,7 +1459,9 @@ function updateBudgetModalTotal() {
   });
   const txtEl = document.getElementById('modalBudgetTotalTxt');
   if (txtEl) {
-    txtEl.textContent = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+    const benchmarks = getMonthlyBenchmarks();
+    const totalBench = Object.values(benchmarks).reduce((a, b) => a + (b || 0), 0);
+    txtEl.textContent = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Benchmark anual: $${totalBench.toLocaleString('en-US',{minimumFractionDigits:2})} USD)`;
   }
 }
 
@@ -1454,17 +1493,20 @@ function renderMonthlyBudgetTrendChart(rows) {
     }
   });
 
+  const benchmarks = getMonthlyBenchmarks();
+
   const keys = Object.keys(monthCostMap).sort();
   const labels = keys.map(k => monthCostMap[k].label);
   const realData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : null);
-  const budgetData = keys.map(k => budgets[k] || 7000);
+  const budgetData = keys.map(k => budgets[k] || 0);
+  const benchmarkData = keys.map(k => benchmarks[k] || null);
 
   const actualCosts = realData.filter(v => v !== null);
   const avgMonthlyCost = actualCosts.length > 0 ? (actualCosts.reduce((a,b)=>a+b,0) / actualCosts.length) : 5500;
   const projectionData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : Math.round(avgMonthlyCost));
 
   const totalRealPeriod = actualCosts.reduce((a,b)=>a+b, 0);
-  const totalBudgetPeriod = keys.slice(0, actualCosts.length).reduce((sum, k) => sum + (budgets[k] || 7000), 0);
+  const totalBudgetPeriod = keys.slice(0, actualCosts.length).reduce((sum, k) => sum + (budgets[k] || 0), 0);
   const tagMeta = document.getElementById('tagBudgetMeta');
   if (tagMeta) {
     const diff = totalBudgetPeriod - totalRealPeriod;
@@ -1475,11 +1517,12 @@ function renderMonthlyBudgetTrendChart(rows) {
     monthlyBudgetTrendChartInstance.data.labels = labels;
     monthlyBudgetTrendChartInstance.data.datasets[0].data = realData;
     monthlyBudgetTrendChartInstance.data.datasets[0].backgroundColor = realData.map((val, idx) => {
-      const b = budgetData[idx] || 7000;
+      const b = budgetData[idx] || 0;
       return (val !== null && val > b) ? 'rgba(228, 0, 43, 0.85)' : 'rgba(61, 157, 107, 0.85)';
     });
     monthlyBudgetTrendChartInstance.data.datasets[1].data = budgetData;
     monthlyBudgetTrendChartInstance.data.datasets[2].data = projectionData;
+    monthlyBudgetTrendChartInstance.data.datasets[3].data = benchmarkData;
     monthlyBudgetTrendChartInstance.update();
     return;
   }
@@ -1494,11 +1537,11 @@ function renderMonthlyBudgetTrendChart(rows) {
           label: 'Gasto Real ($ USD)',
           data: realData,
           backgroundColor: realData.map((val, idx) => {
-            const b = budgetData[idx] || 7000;
+            const b = budgetData[idx] || 0;
             return (val !== null && val > b) ? 'rgba(228, 0, 43, 0.85)' : 'rgba(61, 157, 107, 0.85)';
           }),
           borderRadius: 6,
-          order: 2
+          order: 3
         },
         {
           type: 'line',
@@ -1525,6 +1568,21 @@ function renderMonthlyBudgetTrendChart(rows) {
           pointRadius: 3,
           fill: true,
           tension: 0.35,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Benchmark Histórico ($ USD)',
+          data: benchmarkData,
+          borderColor: '#9D4EDD',
+          backgroundColor: 'rgba(157, 78, 221, 0.08)',
+          borderWidth: 2,
+          borderDash: [3, 3],
+          pointBackgroundColor: '#9D4EDD',
+          pointBorderColor: '#17171A',
+          pointRadius: 4,
+          fill: false,
+          tension: 0.3,
           order: 1
         }
       ]
@@ -1544,15 +1602,17 @@ function renderMonthlyBudgetTrendChart(rows) {
               const val = item.raw;
               if (val === null) return ` Sin datos aún`;
               const idx = item.dataIndex;
-              const b = budgetData[idx] || 7000;
+              const b = budgetData[idx] || 0;
               const diff = b - val;
               const diffTxt = diff >= 0 ? `(Bajo Budget: +$${diff.toLocaleString()} USD)` : `(Sobre Budget: -$${Math.abs(diff).toLocaleString()} USD)`;
               if (item.datasetIndex === 0) {
                 return ` Real: $${Number(val).toLocaleString()} USD ${diffTxt}`;
               } else if (item.datasetIndex === 1) {
                 return ` Budget: $${Number(val).toLocaleString()} USD`;
-              } else {
+              } else if (item.datasetIndex === 2) {
                 return ` Proyección: $${Number(val).toLocaleString()} USD`;
+              } else {
+                return ` Benchmark: $${Number(val).toLocaleString()} USD`;
               }
             }
           }
@@ -2127,6 +2187,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resetBudgetBtn) {
     resetBudgetBtn.addEventListener('click', () => {
       saveMonthlyBudgets(DEFAULT_MONTHLY_BUDGETS);
+      saveMonthlyBenchmarks(DEFAULT_MONTHLY_BENCHMARKS);
       populateBudgetModalInputs();
       renderStatsView();
     });
