@@ -592,8 +592,21 @@ function withTimeout(promise, ms = 1000) {
   ]);
 }
 
+const CAT_META = {
+  MA:  { code:'MA',  label:'MEDIO AMBIENTE',    fullLabel:'MEDIO AMBIENTE',     icon:'🌿', color:'#3D9D6B', bg:'rgba(61,157,107,0.15)',  border:'rgba(61,157,107,0.35)' },
+  SEG: { code:'SEG', label:'SEGURIDAD',          fullLabel:'SEGURIDAD',          icon:'🛡️', color:'#E4002B', bg:'rgba(228,0,43,0.15)',   border:'rgba(228,0,43,0.35)' },
+  CI:  { code:'CI',  label:'CONDICIÓN INSEGURA', fullLabel:'CONDICIÓN INSEGURA', icon:'⚠️', color:'#C9A24A', bg:'rgba(201,162,74,0.15)', border:'rgba(201,162,74,0.35)' },
+  HER: { code:'HER', label:'HERRAMIENTA',        fullLabel:'HERRAMIENTA',        icon:'🔧', color:'#00D2FF', bg:'rgba(0,210,255,0.15)',  border:'rgba(0,210,255,0.35)' },
+  RQ:  { code:'RQ',  label:'REQUERIMIENTO',      fullLabel:'REQUERIMIENTO',      icon:'📋', color:'#9D4EDD', bg:'rgba(157,78,221,0.15)', border:'rgba(157,78,221,0.35)' },
+  GEN: { code:'GEN', label:'GENERAL',            fullLabel:'MANTENIMIENTO GENERAL', icon:'⚙️', color:'#8B8990', bg:'rgba(139,137,144,0.12)', border:'rgba(139,137,144,0.3)' }
+};
+
+function getCategoryMeta(code) {
+  return CAT_META[code] || CAT_META['GEN'];
+}
+
 function extractNoticeCategory(descStr) {
-  if (!descStr) return { code: 'GEN', label: 'GENERAL', fullLabel: 'GENERAL / OPERATIVO', icon: '⚙️', color: '#8B8990', bg: 'rgba(139,137,144,0.12)', border: 'rgba(139,137,144,0.3)', cleanDesc: '—' };
+  if (!descStr) return { ...CAT_META['GEN'], cleanDesc: '—' };
 
   const raw = String(descStr).trim();
   const upper = raw.toUpperCase();
@@ -613,28 +626,36 @@ function extractNoticeCategory(descStr) {
     cleanDesc = parts.slice(1).join('|').trim();
 
     if (prefix === 'MA' || prefix.includes('MEDIO') || prefix.includes('AMBIENTE')) {
-      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
+      code = 'MA';
     } else if (prefix === 'SEG' || prefix.includes('SEGURID')) {
-      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
+      code = 'SEG';
     } else if (prefix === 'CI' || prefix.includes('INSEGURA')) {
-      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
+      code = 'CI';
     } else if (prefix === 'HER' || prefix.includes('HERRAMIENT')) {
-      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
+      code = 'HER';
     } else if (prefix === 'RQ' || prefix.includes('REQUERIMIEN')) {
-      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+      code = 'RQ';
     }
   } else {
-    if (/^(MA[:\s-]|MEDIO\s+AMBIENTE)/i.test(upper) || upper.includes('MEDIO AMBIENTE')) {
-      code = 'MA'; label = 'MEDIO AMBIENTE'; fullLabel = 'MEDIO AMBIENTE'; icon = '🌿'; color = '#3D9D6B'; bg = 'rgba(61,157,107,0.15)'; border = 'rgba(61,157,107,0.35)';
-    } else if (/^(SEG[:\s-]|SEGURIDAD)/i.test(upper) || upper.includes('SEGURIDAD')) {
-      code = 'SEG'; label = 'SEGURIDAD'; fullLabel = 'SEGURIDAD'; icon = '🛡️'; color = '#E4002B'; bg = 'rgba(228,0,43,0.15)'; border = 'rgba(228,0,43,0.35)';
-    } else if (/^(CI[:\s-]|CONDICION\s+INSEGURA|CONDICIÓN\s+INSEGURA)/i.test(upper) || upper.includes('CONDICION INSEGURA') || upper.includes('CONDICIÓN INSEGURA')) {
-      code = 'CI'; label = 'CONDICIÓN INSEGURA'; fullLabel = 'CONDICIÓN INSEGURA'; icon = '⚠️'; color = '#C9A24A'; bg = 'rgba(201,162,74,0.15)'; border = 'rgba(201,162,74,0.35)';
-    } else if (/^(HER[:\s-]|HERRAMIENTA)/i.test(upper) || upper.includes('HERRAMIENTA')) {
-      code = 'HER'; label = 'HERRAMIENTA'; fullLabel = 'HERRAMIENTA'; icon = '🔧'; color = '#00D2FF'; bg = 'rgba(0,210,255,0.15)'; border = 'rgba(0,210,255,0.35)';
-    } else if (/^(RQ[:\s-]|REQUERIMIENTO)/i.test(upper) || upper.includes('REQUERIMIENTO')) {
-      code = 'RQ'; label = 'REQUERIMIENTO'; fullLabel = 'REQUERIMIENTO'; icon = '📋'; color = '#9D4EDD'; bg = 'rgba(157,78,221,0.15)'; border = 'rgba(157,78,221,0.35)';
+    // Exact code match (e.g., when called with just 'MA', 'SEG', etc.)
+    const trimUpper = upper.trim();
+    if (trimUpper === 'MA' || /^(MA[:\s-])/i.test(upper) || upper.includes('MEDIO AMBIENTE')) {
+      code = 'MA';
+    } else if (trimUpper === 'SEG' || /^(SEG[:\s-])/i.test(upper) || upper.includes('SEGURIDAD')) {
+      code = 'SEG';
+    } else if (trimUpper === 'CI' || /^(CI[:\s-]|CONDICION\s+INSEGURA|CONDICIÓN\s+INSEGURA)/i.test(upper) || upper.includes('CONDICION INSEGURA') || upper.includes('CONDICIÓN INSEGURA')) {
+      code = 'CI';
+    } else if (trimUpper === 'HER' || /^(HER[:\s-])/i.test(upper) || upper.includes('HERRAMIENTA')) {
+      code = 'HER';
+    } else if (trimUpper === 'RQ' || /^(RQ[:\s-])/i.test(upper) || upper.includes('REQUERIMIENTO')) {
+      code = 'RQ';
     }
+  }
+
+  if (code !== 'GEN') {
+    const meta = CAT_META[code];
+    label = meta.label; fullLabel = meta.fullLabel; icon = meta.icon;
+    color = meta.color; bg = meta.bg; border = meta.border;
   }
 
   return { code, label, fullLabel, icon, color, bg, border, cleanDesc };
@@ -1337,6 +1358,7 @@ function renderCategoryChart(rows) {
 
   if (categoryChartInstance) {
     categoryChartInstance.data.datasets[0].data = dataVals;
+    categoryChartInstance._catCosts = catCosts; // update for tooltip
     categoryChartInstance.update();
     return;
   }
@@ -1360,7 +1382,9 @@ function renderCategoryChart(rows) {
             label: (ctx) => {
               const codeList = ['MA', 'SEG', 'CI', 'HER', 'RQ', 'GEN'];
               const code = codeList[ctx.dataIndex];
-              const costVal = catCosts[code] || 0;
+              // Use live costs stored on instance (updated on every filter change)
+              const liveCosts = (ctx.chart && ctx.chart._catCosts) || catCosts;
+              const costVal = liveCosts[code] || 0;
               return ` ${ctx.label}: ${ctx.raw} avisos · $${costVal.toLocaleString('en-US', {minimumFractionDigits:2})} USD`;
             }
           }
@@ -1797,8 +1821,7 @@ function renderRankingTable(rows, globalTotalCost) {
 
   tbody.innerHTML = sortedUbics.map(([ubic, data]) => {
     const topCatCode = Object.entries(data.cats).sort((a,b) => b[1] - a[1])[0]?.[0] || 'GEN';
-    const dummyDesc = topCatCode === 'GEN' ? 'Aviso' : topCatCode;
-    const cat = extractNoticeCategory(dummyDesc);
+    const cat = getCategoryMeta(topCatCode); // direct lookup, no parsing needed
     const riskPct = Math.min(99, Math.round(data.open * 20 + data.zaCount * 25 + 20));
     const riskColor = riskPct > 70 ? 'var(--red)' : (riskPct > 45 ? 'var(--gold)' : 'var(--ok)');
 
