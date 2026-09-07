@@ -400,9 +400,22 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       </div>
     </div>
 
-    <!-- SECCIÓN 1 DE GRÁFICOS: ANÁLISIS DE PARETO 80/20 & GASTO POR ÁREA -->
+    <!-- SECCIÓN 1 DE GRÁFICOS: TENDENCIA MENSUAL DE GASTO & PARETO 80/20 -->
     <div class="grid-2">
-      <!-- GRÁFICO 1: PARETO 80/20 -->
+      <!-- GRÁFICO 1: TENDENCIA MENSUAL DE GASTO REAL -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            📈 Tendencia Mensual: Gasto Real e Inversión ($ USD)
+            <span class="tag" id="tagMonthlyTrendMeta">Enero - Diciembre 2026</span>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="monthlyTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- GRÁFICO 2: PARETO 80/20 -->
       <div class="panel-box">
         <div class="panel-head">
           <div class="panel-title">
@@ -415,8 +428,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         </div>
         <div id="paretoAiInsightBox" style="margin-top:14px;"></div>
       </div>
+    </div>
 
-      <!-- GRÁFICO 2: INVERSIÓN POR ÁREA -->
+    <!-- SECCIÓN 2 DE GRÁFICOS: INVERSIÓN POR ÁREA & CATEGORÍAS ESPECIALES -->
+    <div class="grid-2" style="margin-bottom:24px;">
+      <!-- GRÁFICO 3: INVERSIÓN POR ÁREA -->
       <div class="panel-box">
         <div class="panel-head">
           <div class="panel-title">
@@ -428,18 +444,18 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           <canvas id="lineTrendChart"></canvas>
         </div>
       </div>
-    </div>
 
-    <!-- SECCIÓN 2 DE GRÁFICOS: CATEGORÍAS ESPECIALES -->
-    <div class="panel-box" style="margin-bottom:24px;">
-      <div class="panel-head">
-        <div class="panel-title">
-          Distribución por Categorías Especiales (MA / SEG / CI / HER / RQ)
-          <span class="tag">SAP PM Extraído</span>
+      <!-- GRÁFICO 4: CATEGORÍAS ESPECIALES -->
+      <div class="panel-box">
+        <div class="panel-head">
+          <div class="panel-title">
+            Distribución por Categorías Especiales (MA / SEG / CI / HER / RQ)
+            <span class="tag">SAP PM Extraído</span>
+          </div>
         </div>
-      </div>
-      <div class="chart-wrapper" style="height:320px;">
-        <canvas id="categoryChart"></canvas>
+        <div class="chart-wrapper">
+          <canvas id="categoryChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -1167,6 +1183,8 @@ function renderStatsView() {
   }
 
   // Render Charts, Reliability & Table
+  const allRowsForTrend = (monthSelect && monthSelect.value !== 'ALL') ? (window.currentStatsRows || filtered) : filtered;
+  renderMonthlyTrendChart(allRowsForTrend);
   renderParetoChart(filtered);
   renderCategoryChart(filtered);
   renderLineTrendChart(filtered);
@@ -1399,6 +1417,123 @@ function renderLineTrendChart(rows) {
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'Poppins', size: 10.5 } } },
         y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#C9A24A', callback: v => '$' + Number(v).toLocaleString() } }
+      }
+    }
+  });
+}
+
+let monthlyTrendChartInstance = null;
+function renderMonthlyTrendChart(rows) {
+  const ctx = document.getElementById('monthlyTrendChart');
+  if (!ctx) return;
+
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  const monthCostMap = {};
+  for (let m = 1; m <= 12; m++) {
+    const key = `2026-${String(m).padStart(2, '0')}`;
+    monthCostMap[key] = { label: `${monthNames[m-1]} 2026`, fullLabel: `${monthFullNames[m-1]} 2026`, realCost: 0, count: 0, hasData: false };
+  }
+
+  (rows || []).forEach(r => {
+    const dt = parseSAPDate(r[5]);
+    if (dt && dt.getFullYear() === 2026) {
+      const key = `2026-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+      if (monthCostMap[key]) {
+        const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
+        monthCostMap[key].realCost += c;
+        monthCostMap[key].count++;
+        monthCostMap[key].hasData = true;
+      }
+    }
+  });
+
+  const keys = Object.keys(monthCostMap).sort();
+  const labels = keys.map(k => monthCostMap[k].label);
+  const realData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : null);
+
+  const actualCosts = realData.filter(v => v !== null);
+  const totalGasto = actualCosts.reduce((a, b) => a + b, 0);
+  const avgMonthlyCost = actualCosts.length > 0 ? (totalGasto / actualCosts.length) : 0;
+  const projectionData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : Math.round(avgMonthlyCost));
+
+  const tagMeta = document.getElementById('tagMonthlyTrendMeta');
+  if (tagMeta) {
+    tagMeta.textContent = `Gasto Acumulado: $${Math.round(totalGasto).toLocaleString()} USD · Media: $${Math.round(avgMonthlyCost).toLocaleString()} USD/mes`;
+  }
+
+  if (monthlyTrendChartInstance) {
+    monthlyTrendChartInstance.data.labels = labels;
+    monthlyTrendChartInstance.data.datasets[0].data = realData;
+    monthlyTrendChartInstance.data.datasets[1].data = projectionData;
+    monthlyTrendChartInstance.update();
+    return;
+  }
+
+  monthlyTrendChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Gasto Real Mensual ($ USD)',
+          data: realData,
+          backgroundColor: 'rgba(201, 162, 74, 0.85)',
+          borderColor: '#C9A24A',
+          borderWidth: 1,
+          borderRadius: 6,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Tendencia & Media Proyectada ($ USD)',
+          data: projectionData,
+          borderColor: '#00D2FF',
+          backgroundColor: 'rgba(0, 210, 255, 0.08)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#00D2FF',
+          pointBorderColor: '#17171A',
+          pointRadius: 4,
+          fill: true,
+          tension: 0.35,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#F2F1EE', font: { family: 'Poppins', size: 10.5 }, boxWidth: 12 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const val = item.raw;
+              if (val === null) return ` Sin registros para este mes`;
+              return ` ${item.dataset.label}: $${Number(val).toLocaleString()} USD`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#8B8990', font: { size: 10 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#8B8990',
+            font: { size: 10 },
+            callback: (v) => '$' + Number(v).toLocaleString()
+          }
+        }
       }
     }
   });
