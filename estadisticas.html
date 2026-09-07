@@ -858,22 +858,33 @@ async function loadStatsData() {
       }
 
       // 1. Cargar lotes de upload_history si existen
-      const historySnap = await withTimeout(_fbDb.collection('upload_history').orderBy('uploadTimestamp', 'desc').get(), 3000);
+      let historySnap = null;
+      try {
+        historySnap = await withTimeout(_fbDb.collection('upload_history').get(), 3000);
+      } catch(e) {}
+
       if (historySnap && !historySnap.empty) {
         allBatchesMap = {};
         const batchOptions = ['<option value="ALL_TIME">📜 Todo el Historial Acumulado (Todas las cargas de la planta)</option>'];
 
-        historySnap.forEach(doc => {
+        const sortedDocs = historySnap.docs.slice().sort((a, b) => {
+          const tA = Number(a.data().uploadTimestamp || a.data().timestamp || 0);
+          const tB = Number(b.data().uploadTimestamp || b.data().timestamp || 0);
+          return tB - tA;
+        });
+
+        sortedDocs.forEach(doc => {
           const data = doc.data();
-          const batchId = data.batchId || doc.id;
-          const dt = data.uploadTimestamp ? new Date(data.uploadTimestamp) : new Date();
+          const batchId = data.batchId || data.id || doc.id;
+          const ts = Number(data.uploadTimestamp || data.timestamp || Date.now());
+          const dt = new Date(ts);
           const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           let parsedRows = [];
           if (data.csvText) parsedRows = parseCSVText(data.csvText);
 
           allBatchesMap[batchId] = {
             batchId, fileName: data.fileName || 'Archivo_SAP.csv',
-            uploadTimestamp: data.uploadTimestamp || Date.now(),
+            uploadTimestamp: ts,
             rowsCount: data.rowsCount || parsedRows.length, rows: parsedRows
           };
           batchOptions.push(`<option value="${batchId}">📁 ${data.fileName || 'Archivo SAP'} — ${dtStr} (${parsedRows.length} avisos)</option>`);
@@ -1132,6 +1143,15 @@ function renderStatsView() {
   const avgCostPerAviso = total > 0 ? (totalCost / total) : 0;
   const countWithCost = filtered.filter(r => (typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, ''))) > 0).length;
 
+  const kpiTotalCost = document.getElementById('kpiTotalCost');
+  const kpiTotalCostSub = document.getElementById('kpiTotalCostSub');
+  if (kpiTotalCost) {
+    kpiTotalCost.textContent = `$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (kpiTotalCostSub) {
+    kpiTotalCostSub.textContent = `Acumulado en ${countWithCost} OTs con costo directo`;
+  }
+
   const kpiTotalAvisos = document.getElementById('kpiTotalAvisos');
   const kpiTotalAvisosSub = document.getElementById('kpiTotalAvisosSub');
   const kpiAvisosBadge = document.getElementById('kpiAvisosBadge');
@@ -1139,11 +1159,11 @@ function renderStatsView() {
     kpiTotalAvisos.textContent = `${total.toLocaleString()} avisos`;
   }
   if (kpiTotalAvisosSub) {
-    kpiTotalAvisosSub.textContent = `${closed} resueltos (${slaRate}%) · ${pending} pendientes`;
+    kpiTotalAvisosSub.textContent = `${cerrados} resueltos (${slaPct}) · ${abiertos} pendientes`;
   }
   if (kpiAvisosBadge) {
-    kpiAvisosBadge.textContent = pending === 0 ? 'Al Día' : `${pending} pendientes`;
-    kpiAvisosBadge.className = pending === 0 ? 'kpi-badge badge-ok' : 'kpi-badge badge-cyan';
+    kpiAvisosBadge.textContent = abiertos === 0 ? 'Al Día' : `${abiertos} pendientes`;
+    kpiAvisosBadge.className = abiertos === 0 ? 'kpi-badge badge-ok' : 'kpi-badge badge-cyan';
   }
 
   const kpiAvgCost = document.getElementById('kpiAvgCost');
