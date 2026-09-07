@@ -14,21 +14,12 @@
     critDays: 5,     // días para alerta crítica
     targetOEE: 85,   // % disponibilidad esperada
 
-    // 2. Presupuestos Mensuales y Benchmarks (USD) - Hoja2 Excel (Metodología ZBB)
-    budgets: (typeof window !== 'undefined' && window.MONTHLY_BUDGETS_2026 && Object.keys(window.MONTHLY_BUDGETS_2026).length > 0)
-      ? window.MONTHLY_BUDGETS_2026
-      : {
-          "2026-01": 9765.91, "2026-02": 3901.55, "2026-03": 3901.55, "2026-04": 4797.36,
-          "2026-05": 3910.84, "2026-06": 4749.93, "2026-07": 3901.55, "2026-08": 5600.05,
-          "2026-09": 4334.09, "2026-10": 5323.31, "2026-11": 5030.11, "2026-12": 4783.75
-        },
-    benchmarks: (typeof window !== 'undefined' && window.MONTHLY_BENCHMARKS_2026 && Object.keys(window.MONTHLY_BENCHMARKS_2026).length > 0)
-      ? window.MONTHLY_BENCHMARKS_2026
-      : {
-          "2026-01": 4828.21, "2026-02": 3390.59, "2026-03": 4230.55, "2026-04": 4267.04,
-          "2026-05": 3430.85, "2026-06": 3532.72, "2026-07": 4294.75, "2026-08": 4013.70,
-          "2026-09": 3218.14, "2026-10": 3705.63, "2026-11": 3170.53, "2026-12": 3123.87
-        },
+    // 2. Presupuestos Mensuales (USD)
+    budgets: {
+      "2026-01": 7000, "2026-02": 6500, "2026-03": 8000, "2026-04": 7500,
+      "2026-05": 6000, "2026-06": 7000, "2026-07": 8500, "2026-08": 5500,
+      "2026-09": 7000, "2026-10": 7500, "2026-11": 6500, "2026-12": 8000
+    },
     currency: 'USD',
     budgetAlertThreshold: 85, // %
 
@@ -332,22 +323,11 @@
               </div>
             </div>
 
-            <!-- Sincronización Firebase Cloud -->
-            <div class="settings-field" style="border-color:rgba(201,162,74,0.35); background:rgba(201,162,74,0.05);">
-              <label class="settings-label" style="color:var(--gold,#C9A24A); display:flex; align-items:center; gap:6px;">
-                ☁️ Sincronización Cloud Firebase (Hoja 1 + Hoja 2)
-              </label>
-              <div class="settings-desc">Sube y sincroniza el catálogo oficial de 286 avisos y la matriz mensual de Presupuestos y Benchmarks 2026 directamente a Firestore.</div>
-              <button type="button" class="settings-btn-reset" id="btnTriggerCloudSync" style="margin-top:8px; background:linear-gradient(135deg,#C9A24A,#E4002B); border:none; color:#FFF; font-weight:700; cursor:pointer;">
-                🚀 Abrir Centro de Sincronización Firebase
-              </button>
-            </div>
-
             <div class="settings-field" style="border-color:rgba(228,0,43,0.3); background:rgba(228,0,43,0.04);">
               <label class="settings-label" style="color:var(--red,#E4002B);">Restablecer Base de Datos de Fábrica:</label>
-              <div class="settings-desc">Restaura inmediatamente los 286 avisos oficiales embebidos y limpia datos temporales.</div>
+              <div class="settings-desc">Restaura inmediatamente los 269 avisos oficiales embebidos y limpia datos temporales.</div>
               <button type="button" class="settings-btn-reset" id="btnRestoreFactoryData" style="margin-top:8px; background:rgba(228,0,43,0.15); border-color:var(--red,#E4002B); color:#FFF; font-weight:700;">
-                ⚠️ Restaurar Dataset Oficial de Fábrica (286 Avisos)
+                ⚠️ Restaurar Dataset Oficial de Fábrica
               </button>
             </div>
           </div>
@@ -487,23 +467,11 @@
       });
     }
 
-    // Sincronización Firebase Cloud
-    const btnCloudSync = modal.querySelector('#btnTriggerCloudSync');
-    if (btnCloudSync) {
-      btnCloudSync.addEventListener('click', () => {
-        if (window.FirebaseSync && typeof window.FirebaseSync.open === 'function') {
-          window.FirebaseSync.open();
-        } else {
-          alert('El módulo Firebase Sync se está cargando...');
-        }
-      });
-    }
-
     // Restaurar Fábrica
     const btnRestore = modal.querySelector('#btnRestoreFactoryData');
     if (btnRestore) {
       btnRestore.addEventListener('click', () => {
-        if (confirm('⚠️ ¿Está seguro de restaurar el dataset oficial de 286 registros de fábrica? Esto sobreescribirá cambios no guardados.')) {
+        if (confirm('⚠️ ¿Está seguro de restaurar el dataset oficial de 269 registros de fábrica? Esto sobreescribirá cambios no guardados.')) {
           if (typeof window.DEFAULT_EMBEDDED_CSV === 'string') {
             localStorage.setItem('cocacola_active_csv', window.DEFAULT_EMBEDDED_CSV);
             if (typeof _fbDb !== 'undefined') {
@@ -513,7 +481,7 @@
                 fileName: 'DBMANTTO.csv'
               }).catch(()=>{});
             }
-            alert('✅ Base de datos restaurada al dataset oficial de fábrica (286 registros). La página se recargará.');
+            alert('✅ Base de datos restaurada al dataset oficial de fábrica. La página se recargará.');
             window.location.reload();
           }
         }
