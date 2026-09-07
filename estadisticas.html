@@ -666,7 +666,7 @@ function parseSAPDate(dateStr) {
     }
   }
 
-  // 3. Formato MM/DD/YYYY o DD/MM/YYYY con adaptación para formato Mes/Día/Año
+  // 3. Formato SAP PM DD.MM.YYYY (o DD/MM/YYYY)
   const matchParts = s.match(/^(\d{1,2})[\./-](\d{1,2})[\./-](\d{2,4})/);
   if (matchParts) {
     const p1 = parseInt(matchParts[1], 10);
@@ -676,18 +676,14 @@ function parseSAPDate(dateStr) {
 
     let month, day;
 
-    if (p1 > 12) {
-      // p1 es el Día (ej: 28/07/2026 -> Día 28, Mes 7)
-      day = p1;
-      month = p2 - 1;
-    } else if (p2 > 12) {
-      // p2 es el Día (ej: 07/28/2026 -> Mes 7, Día 28)
+    if (p2 > 12) {
+      // Caso atípico MM/DD/YYYY donde el día es p2 > 12 (ej: 08/25/2026)
       month = p1 - 1;
       day = p2;
     } else {
-      // Ambos <= 12 (ej: 08/11/2026 en MM/DD/YYYY -> Mes 08 = Agosto, Día 11)
-      month = p1 - 1;
-      day = p2;
+      // Formato oficial SAP PM e hispanoamericano DD.MM.YYYY (ej: 11.08.2026 -> 11 de Agosto)
+      day = p1;
+      month = p2 - 1;
     }
 
     if (year > 1990 && year < 2100 && month >= 0 && month < 12 && day >= 1 && day <= 31) {

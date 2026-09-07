@@ -1952,15 +1952,12 @@ function parseSAPDate(val) {
 
     let month, day;
 
-    if (p1 > 12) {
-      day = p1;
-      month = p2 - 1;
-    } else if (p2 > 12) {
+    if (p2 > 12) {
       month = p1 - 1;
       day = p2;
     } else {
-      month = p1 - 1;
-      day = p2;
+      day = p1;
+      month = p2 - 1;
     }
 
     if (year > 1990 && year < 2100 && month >= 0 && month < 12 && day >= 1 && day <= 31) {
