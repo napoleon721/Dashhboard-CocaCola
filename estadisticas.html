@@ -349,14 +349,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <div class="kpi-label" id="kpiTotalCostSub">Gasto real acumulado en OTs</div>
       </div>
 
-      <!-- KPI 2: BUDGET / PRESUPUESTO ASIGNADO -->
+      <!-- KPI 2: VOLUMEN DE AVISOS PROCESADOS -->
       <div class="kpi-card" style="border-color: rgba(0, 210, 255, 0.45); background: linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(23, 23, 26, 0.95) 100%);">
         <div class="kpi-top">
-          <div class="kpi-ic" style="color:var(--cyan);"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
-          <span class="kpi-badge badge-cyan" id="kpiBudgetBadge">Budget Asignado</span>
+          <div class="kpi-ic" style="color:var(--cyan);"><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+          <span class="kpi-badge badge-cyan" id="kpiAvisosBadge">Volumen Operativo</span>
         </div>
-        <div class="kpi-value" id="kpiBudget" style="color:var(--cyan); font-size:22px;">$56,000.00</div>
-        <div class="kpi-label" id="kpiBudgetSub">Ejecución: 79.2% (En Rango Presupuestario)</div>
+        <div class="kpi-value" id="kpiTotalAvisos" style="color:var(--cyan); font-size:22px;">0</div>
+        <div class="kpi-label" id="kpiTotalAvisosSub">Avisos registrados en planta</div>
       </div>
 
       <!-- KPI 3: COSTO PROMEDIO POR INTERVENCIÓN -->
@@ -400,25 +400,9 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       </div>
     </div>
 
-    <!-- SECCIÓN 1 DE GRÁFICOS: TENDENCIA REAL VS BUDGET & PARETO -->
+    <!-- SECCIÓN 1 DE GRÁFICOS: ANÁLISIS DE PARETO 80/20 & GASTO POR ÁREA -->
     <div class="grid-2">
-      <!-- GRÁFICO 1: TENDENCIA MENSUAL DE GASTOS REAL VS BUDGET PROYECTADO -->
-      <div class="panel-box">
-        <div class="panel-head">
-          <div class="panel-title">
-            📈 Tendencia Mensual: Gasto Real vs Budget Proyectado ($ USD)
-            <span class="tag" id="tagBudgetMeta">Enero - Agosto 2026</span>
-          </div>
-          <button class="btn" id="btnOpenBudgetModal" style="padding:4px 10px; font-size:11px; border-color:rgba(201,162,74,0.4); color:var(--gold); background:rgba(201,162,74,0.08);">
-            ⚙️ Configurar Budget Mensual
-          </button>
-        </div>
-        <div class="chart-wrapper">
-          <canvas id="monthlyBudgetTrendChart"></canvas>
-        </div>
-      </div>
-
-      <!-- GRÁFICO 2: PARETO 80/20 -->
+      <!-- GRÁFICO 1: PARETO 80/20 -->
       <div class="panel-box">
         <div class="panel-head">
           <div class="panel-title">
@@ -431,11 +415,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         </div>
         <div id="paretoAiInsightBox" style="margin-top:14px;"></div>
       </div>
-    </div>
 
-    <!-- SECCIÓN 2 DE GRÁFICOS: INVERSIÓN POR ÁREA & CATEGORÍAS ESPECIALES -->
-    <div class="grid-2">
-      <!-- GRÁFICO INVERSIÓN POR ÁREA -->
+      <!-- GRÁFICO 2: INVERSIÓN POR ÁREA -->
       <div class="panel-box">
         <div class="panel-head">
           <div class="panel-title">
@@ -447,18 +428,18 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           <canvas id="lineTrendChart"></canvas>
         </div>
       </div>
+    </div>
 
-      <!-- GRÁFICO CATEGORÍAS ESPECIALES -->
-      <div class="panel-box">
-        <div class="panel-head">
-          <div class="panel-title">
-            Distribución por Categorías Especiales (MA / SEG / CI / HER / RQ)
-            <span class="tag">SAP PM Extraído</span>
-          </div>
+    <!-- SECCIÓN 2 DE GRÁFICOS: CATEGORÍAS ESPECIALES -->
+    <div class="panel-box" style="margin-bottom:24px;">
+      <div class="panel-head">
+        <div class="panel-title">
+          Distribución por Categorías Especiales (MA / SEG / CI / HER / RQ)
+          <span class="tag">SAP PM Extraído</span>
         </div>
-        <div class="chart-wrapper">
-          <canvas id="categoryChart"></canvas>
-        </div>
+      </div>
+      <div class="chart-wrapper" style="height:320px;">
+        <canvas id="categoryChart"></canvas>
       </div>
     </div>
 
@@ -556,37 +537,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   </div>
 </div>
 
-<!-- MODAL CONFIGURACIÓN DE BUDGET / PRESUPUESTOS MENSUALES -->
-<div class="auth-modal-backdrop" id="budgetConfigModal">
-  <div class="auth-modal-card" style="max-width:560px;">
-    <div class="auth-modal-header">
-      <div class="auth-modal-title" style="color:var(--gold);">
-        <svg class="icon" viewBox="0 0 24 24" style="color:var(--gold);"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        ⚙️ Configurar Presupuesto Mensual (Budget USD)
-      </div>
-      <button class="modal-close" id="btnCloseBudgetModal" style="background:transparent; border:none; color:var(--text-dim); font-size:22px; cursor:pointer; padding:0 6px;">&times;</button>
-    </div>
-    <div class="auth-modal-body">
-      <div style="font-size:12px; color:var(--text-dim); line-height:1.4;">
-        Establezca los montos del <strong>Budget Mensual ($ USD)</strong> para comparar contra la inversión real ejecutada en órdenes de trabajo (OTs) y proyectar la tendencia financiera.
-      </div>
 
-      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-top:10px; max-height:280px; overflow-y:auto; padding-right:6px;" id="budgetInputsGrid">
-        <!-- Inputs dinámicos por mes -->
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
-        <div style="font-size:11.5px; color:var(--text-dim);">
-          Total Budget Anual: <strong id="modalBudgetTotalTxt" style="color:var(--cyan); font-family:var(--mono);">$56,000.00 USD</strong>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn" id="btnResetBudgetDefaults" style="font-size:11.5px; padding:7px 12px;">Restablecer</button>
-          <button class="btn gold" id="btnSaveBudgetConfig" style="font-size:11.5px; padding:7px 14px; font-weight:700;">Guardar Budget</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 let currentStatsRows = [];
@@ -1157,7 +1108,7 @@ function renderStatsView() {
     }
   }
 
-  // 6. Finanzas & Presupuesto (Budget vs Real)
+  // 6. Finanzas & Volumen Operativo
   const totalCost = filtered.reduce((acc, r) => {
     const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
     return acc + c;
@@ -1165,34 +1116,18 @@ function renderStatsView() {
   const avgCostPerAviso = total > 0 ? (totalCost / total) : 0;
   const countWithCost = filtered.filter(r => (typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, ''))) > 0).length;
 
-  const budgets = getMonthlyBudgets();
-  const totalBudget8Months = Object.keys(budgets).slice(0, 8).reduce((sum, k) => sum + (budgets[k] || 7000), 0);
-  const budgetExecutionPct = totalBudget8Months > 0 ? ((totalCost / totalBudget8Months) * 100).toFixed(1) : '0.0';
-  const budgetDiff = totalBudget8Months - totalCost;
-
-  const kpiTotalCost = document.getElementById('kpiTotalCost');
-  const kpiTotalCostSub = document.getElementById('kpiTotalCostSub');
-  if (kpiTotalCost) {
-    kpiTotalCost.textContent = `$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const kpiTotalAvisos = document.getElementById('kpiTotalAvisos');
+  const kpiTotalAvisosSub = document.getElementById('kpiTotalAvisosSub');
+  const kpiAvisosBadge = document.getElementById('kpiAvisosBadge');
+  if (kpiTotalAvisos) {
+    kpiTotalAvisos.textContent = `${total.toLocaleString()} avisos`;
   }
-  if (kpiTotalCostSub) {
-    kpiTotalCostSub.textContent = `Acumulado en ${countWithCost} OTs con costo directo`;
+  if (kpiTotalAvisosSub) {
+    kpiTotalAvisosSub.textContent = `${closed} resueltos (${slaRate}%) · ${pending} pendientes`;
   }
-
-  const kpiBudget = document.getElementById('kpiBudget');
-  const kpiBudgetSub = document.getElementById('kpiBudgetSub');
-  const kpiBudgetBadge = document.getElementById('kpiBudgetBadge');
-  if (kpiBudget) {
-    kpiBudget.textContent = `$${totalBudget8Months.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (kpiBudgetSub) {
-    kpiBudgetSub.textContent = budgetDiff >= 0
-      ? `Ejecución: ${budgetExecutionPct}% (Ahorro: +$${budgetDiff.toLocaleString('en-US', {minimumFractionDigits:2})} USD)`
-      : `Ejecución: ${budgetExecutionPct}% (Excedente: -$${Math.abs(budgetDiff).toLocaleString('en-US', {minimumFractionDigits:2})} USD)`;
-  }
-  if (kpiBudgetBadge) {
-    kpiBudgetBadge.textContent = budgetDiff >= 0 ? 'En Rango Presupuestario' : 'Desviación Presupuesto';
-    kpiBudgetBadge.className = budgetDiff >= 0 ? 'kpi-badge badge-ok' : 'kpi-badge badge-warn';
+  if (kpiAvisosBadge) {
+    kpiAvisosBadge.textContent = pending === 0 ? 'Al Día' : `${pending} pendientes`;
+    kpiAvisosBadge.className = pending === 0 ? 'kpi-badge badge-ok' : 'kpi-badge badge-cyan';
   }
 
   const kpiAvgCost = document.getElementById('kpiAvgCost');
@@ -1232,7 +1167,6 @@ function renderStatsView() {
   }
 
   // Render Charts, Reliability & Table
-  renderMonthlyBudgetTrendChart(filtered);
   renderParetoChart(filtered);
   renderCategoryChart(filtered);
   renderLineTrendChart(filtered);
@@ -1348,223 +1282,7 @@ function renderParetoChart(rows) {
   });
 }
 
-// ============================================================================
-// SISTEMA DE PRESUPUESTOS (BUDGET MENSUAL) Y PROYECCIONES FINANCIERAS
-// ============================================================================
-const DEFAULT_MONTHLY_BUDGETS = {
-  '2026-01': 7000,
-  '2026-02': 7000,
-  '2026-03': 7000,
-  '2026-04': 7000,
-  '2026-05': 7000,
-  '2026-06': 7000,
-  '2026-07': 7000,
-  '2026-08': 7000,
-  '2026-09': 7000,
-  '2026-10': 7000,
-  '2026-11': 7000,
-  '2026-12': 7000
-};
 
-function getMonthlyBudgets() {
-  try {
-    const saved = localStorage.getItem('cocacola_monthly_budgets');
-    if (saved) return JSON.parse(saved);
-  } catch(e){}
-  return { ...DEFAULT_MONTHLY_BUDGETS };
-}
-
-function saveMonthlyBudgets(budgets) {
-  try {
-    localStorage.setItem('cocacola_monthly_budgets', JSON.stringify(budgets));
-    if (typeof _fbDb !== 'undefined') {
-      _fbDb.collection('plant_data').doc('budget_config').set({
-        budgets: budgets,
-        updatedAt: Date.now()
-      }).catch(()=>{});
-    }
-  } catch(e){}
-}
-
-function populateBudgetModalInputs() {
-  const grid = document.getElementById('budgetInputsGrid');
-  if (!grid) return;
-
-  const budgets = getMonthlyBudgets();
-  const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-  grid.innerHTML = monthFullNames.map((name, idx) => {
-    const key = `2026-${String(idx + 1).padStart(2, '0')}`;
-    const val = budgets[key] || 7000;
-    return `
-      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
-        <label style="font-size:11px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:3px;">${name} 2026</label>
-        <div style="display:flex; align-items:center; gap:4px;">
-          <span style="color:var(--gold); font-size:12px; font-weight:700;">$</span>
-          <input type="number" class="budget-month-input" data-key="${key}" value="${val}" style="width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:5px; color:var(--text); padding:4px 8px; font-family:var(--mono); font-size:12px; font-weight:600;" />
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  updateBudgetModalTotal();
-
-  grid.querySelectorAll('.budget-month-input').forEach(input => {
-    input.addEventListener('input', updateBudgetModalTotal);
-  });
-}
-
-function updateBudgetModalTotal() {
-  const inputs = document.querySelectorAll('.budget-month-input');
-  let total = 0;
-  inputs.forEach(inp => {
-    total += parseFloat(inp.value) || 0;
-  });
-  const txtEl = document.getElementById('modalBudgetTotalTxt');
-  if (txtEl) {
-    txtEl.textContent = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
-  }
-}
-
-let monthlyBudgetTrendChartInstance = null;
-function renderMonthlyBudgetTrendChart(rows) {
-  const ctx = document.getElementById('monthlyBudgetTrendChart');
-  if (!ctx) return;
-
-  const budgets = getMonthlyBudgets();
-  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-  const monthCostMap = {};
-  for (let m = 1; m <= 12; m++) {
-    const key = `2026-${String(m).padStart(2, '0')}`;
-    monthCostMap[key] = { label: `${monthNames[m-1]} 2026`, fullLabel: `${monthFullNames[m-1]} 2026`, realCost: 0, count: 0, hasData: false };
-  }
-
-  rows.forEach(r => {
-    const dt = parseSAPDate(r[5]);
-    if (dt && dt.getFullYear() === 2026) {
-      const key = `2026-${String(dt.getMonth() + 1).padStart(2, '0')}`;
-      if (monthCostMap[key]) {
-        const c = typeof r[13] === 'number' ? r[13] : parseFloat(String(r[13] || '0').replace(/,/g, '')) || 0;
-        monthCostMap[key].realCost += c;
-        monthCostMap[key].count++;
-        monthCostMap[key].hasData = true;
-      }
-    }
-  });
-
-  const keys = Object.keys(monthCostMap).sort();
-  const labels = keys.map(k => monthCostMap[k].label);
-  const realData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : null);
-  const budgetData = keys.map(k => budgets[k] || 7000);
-
-  const actualCosts = realData.filter(v => v !== null);
-  const avgMonthlyCost = actualCosts.length > 0 ? (actualCosts.reduce((a,b)=>a+b,0) / actualCosts.length) : 5500;
-  const projectionData = keys.map(k => monthCostMap[k].hasData ? Math.round(monthCostMap[k].realCost) : Math.round(avgMonthlyCost));
-
-  const totalRealPeriod = actualCosts.reduce((a,b)=>a+b, 0);
-  const totalBudgetPeriod = keys.slice(0, actualCosts.length).reduce((sum, k) => sum + (budgets[k] || 7000), 0);
-  const tagMeta = document.getElementById('tagBudgetMeta');
-  if (tagMeta) {
-    const diff = totalBudgetPeriod - totalRealPeriod;
-    tagMeta.textContent = diff >= 0 ? `Ahorro Acumulado: +$${Math.round(diff).toLocaleString()} USD` : `Excedente: -$${Math.round(Math.abs(diff)).toLocaleString()} USD`;
-  }
-
-  if (monthlyBudgetTrendChartInstance) {
-    monthlyBudgetTrendChartInstance.data.labels = labels;
-    monthlyBudgetTrendChartInstance.data.datasets[0].data = realData;
-    monthlyBudgetTrendChartInstance.data.datasets[0].backgroundColor = realData.map((val, idx) => {
-      const b = budgetData[idx] || 7000;
-      return (val !== null && val > b) ? 'rgba(228, 0, 43, 0.85)' : 'rgba(61, 157, 107, 0.85)';
-    });
-    monthlyBudgetTrendChartInstance.data.datasets[1].data = budgetData;
-    monthlyBudgetTrendChartInstance.data.datasets[2].data = projectionData;
-    monthlyBudgetTrendChartInstance.update();
-    return;
-  }
-
-  monthlyBudgetTrendChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          type: 'bar',
-          label: 'Gasto Real ($ USD)',
-          data: realData,
-          backgroundColor: realData.map((val, idx) => {
-            const b = budgetData[idx] || 7000;
-            return (val !== null && val > b) ? 'rgba(228, 0, 43, 0.85)' : 'rgba(61, 157, 107, 0.85)';
-          }),
-          borderRadius: 6,
-          order: 2
-        },
-        {
-          type: 'line',
-          label: 'Budget Asignado ($ USD)',
-          data: budgetData,
-          borderColor: '#C9A24A',
-          backgroundColor: 'transparent',
-          borderWidth: 2.5,
-          borderDash: [6, 4],
-          pointBackgroundColor: '#C9A24A',
-          pointBorderColor: '#17171A',
-          pointRadius: 4,
-          tension: 0.1,
-          order: 0
-        },
-        {
-          type: 'line',
-          label: 'Tendencia & Proyección ($ USD)',
-          data: projectionData,
-          borderColor: '#00D2FF',
-          backgroundColor: 'rgba(0, 210, 255, 0.08)',
-          borderWidth: 2,
-          pointBackgroundColor: '#00D2FF',
-          pointRadius: 3,
-          fill: true,
-          tension: 0.35,
-          order: 1
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: { color: '#F2F1EE', font: { family: 'Poppins', size: 10.5 }, boxWidth: 12 }
-        },
-        tooltip: {
-          callbacks: {
-            label: (item) => {
-              const val = item.raw;
-              if (val === null) return ` Sin datos aún`;
-              const idx = item.dataIndex;
-              const b = budgetData[idx] || 7000;
-              const diff = b - val;
-              const diffTxt = diff >= 0 ? `(Bajo Budget: +$${diff.toLocaleString()} USD)` : `(Sobre Budget: -$${Math.abs(diff).toLocaleString()} USD)`;
-              if (item.datasetIndex === 0) {
-                return ` Real: $${Number(val).toLocaleString()} USD ${diffTxt}`;
-              } else if (item.datasetIndex === 1) {
-                return ` Budget: $${Number(val).toLocaleString()} USD`;
-              } else {
-                return ` Proyección: $${Number(val).toLocaleString()} USD`;
-              }
-            }
-          }
-        }
-      },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8B8990', font: { family: 'Poppins', size: 10 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#C9A24A', callback: v => '$' + Number(v).toLocaleString() } }
-      }
-    }
-  });
-}
 
 let categoryChartInstance = null;
 function renderCategoryChart(rows) {
@@ -2098,55 +1816,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('filterMonth')?.addEventListener('change', renderStatsView);
   document.getElementById('searchInput')?.addEventListener('input', renderStatsView);
 
-  // Modal de Presupuesto (Budget)
-  const budgetModal = document.getElementById('budgetConfigModal');
-  const openBudgetBtn = document.getElementById('btnOpenBudgetModal');
-  const closeBudgetBtn = document.getElementById('btnCloseBudgetModal');
-  const resetBudgetBtn = document.getElementById('btnResetBudgetDefaults');
-  const saveBudgetBtn = document.getElementById('btnSaveBudgetConfig');
 
-  if (openBudgetBtn && budgetModal) {
-    openBudgetBtn.addEventListener('click', () => {
-      populateBudgetModalInputs();
-      budgetModal.classList.add('active');
-    });
-  }
-
-  if (closeBudgetBtn && budgetModal) {
-    closeBudgetBtn.addEventListener('click', () => {
-      budgetModal.classList.remove('active');
-    });
-  }
-
-  if (budgetModal) {
-    budgetModal.addEventListener('click', (e) => {
-      if (e.target === budgetModal) budgetModal.classList.remove('active');
-    });
-  }
-
-  if (resetBudgetBtn) {
-    resetBudgetBtn.addEventListener('click', () => {
-      saveMonthlyBudgets(DEFAULT_MONTHLY_BUDGETS);
-      populateBudgetModalInputs();
-      renderStatsView();
-    });
-  }
-
-  if (saveBudgetBtn) {
-    saveBudgetBtn.addEventListener('click', () => {
-      const inputs = document.querySelectorAll('.budget-month-input');
-      const newBudgets = {};
-      inputs.forEach(inp => {
-        const key = inp.getAttribute('data-key');
-        const val = parseFloat(inp.value) || 0;
-        if (key) newBudgets[key] = val;
-      });
-      saveMonthlyBudgets(newBudgets);
-      if (budgetModal) budgetModal.classList.remove('active');
-      renderStatsView();
-      alert('✅ Presupuestos mensuales (Budget) guardados y aplicados a las gráficas y KPIs.');
-    });
-  }
 
   // Export Excel
   document.getElementById('exportStatsExcelBtn')?.addEventListener('click', () => {

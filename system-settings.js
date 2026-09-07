@@ -14,16 +14,9 @@
     critDays: 5,     // días para alerta crítica
     targetOEE: 85,   // % disponibilidad esperada
 
-    // 2. Presupuestos Mensuales (USD)
-    budgets: {
-      "2026-01": 7000, "2026-02": 6500, "2026-03": 8000, "2026-04": 7500,
-      "2026-05": 6000, "2026-06": 7000, "2026-07": 8500, "2026-08": 5500,
-      "2026-09": 7000, "2026-10": 7500, "2026-11": 6500, "2026-12": 8000
-    },
     currency: 'USD',
-    budgetAlertThreshold: 85, // %
 
-    // 3. Seguridad & Roles
+    // 2. Seguridad & Roles
     masterPass: 'master123',
     inactivityMinutes: 10,
     customOperators: [],
@@ -194,7 +187,6 @@
 
         <div class="settings-tabs-bar">
           <button class="settings-tab-item active" data-tab="tab-kpis">🎯 Metas & KPIs</button>
-          <button class="settings-tab-item" data-tab="tab-budget">💵 Presupuesto (USD)</button>
           <button class="settings-tab-item" data-tab="tab-security">🛡️ Seguridad & Roles</button>
           <button class="settings-tab-item" data-tab="tab-data">💾 Datos & Respaldo</button>
         </div>
@@ -230,35 +222,15 @@
                 <div class="settings-desc">Disponibilidad operacional proyectada para las líneas de envasado.</div>
                 <input type="number" id="cfgTargetOEE" class="settings-input" min="50" max="100" step="1" />
               </div>
-            </div>
-          </div>
 
-          <!-- TAB 2: BUDGET / PRESUPUESTO -->
-          <div class="settings-pane" id="tab-budget">
-            <div style="font-size:12px; color:var(--text-dim,#8B8990); line-height:1.4;">
-              Presupuestos mensuales asignados para comparar contra el gasto real de órdenes de trabajo (OTs) y proyectar la tendencia financiera.
-            </div>
-
-            <div class="settings-grid-2">
               <div class="settings-field">
-                <label class="settings-label" for="cfgCurrency">Moneda Operativa:</label>
+                <label class="settings-label" for="cfgCurrency">Moneda del Sistema:</label>
+                <div class="settings-desc">Moneda para reportes financieros y costos de refacciones en órdenes de trabajo.</div>
                 <select id="cfgCurrency" class="settings-input">
                   <option value="USD">Dólares Estadounidenses ($ USD)</option>
                   <option value="EUR">Euros (€ EUR)</option>
                   <option value="MXN">Pesos Mexicanos ($ MXN)</option>
                 </select>
-              </div>
-
-              <div class="settings-field">
-                <label class="settings-label" for="cfgBudgetThreshold">Umbral Alerta Sobrecoste (%):</label>
-                <input type="number" id="cfgBudgetThreshold" class="settings-input" min="50" max="100" step="5" />
-              </div>
-            </div>
-
-            <div style="margin-top:6px;">
-              <div class="settings-label" style="margin-bottom:8px;">Distribución Mensual de Presupuesto:</div>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px;" id="cfgBudgetInputsContainer">
-                <!-- Dinámico -->
               </div>
             </div>
           </div>
@@ -391,16 +363,11 @@
         const critDays = parseInt(modal.querySelector('#cfgCritDays').value, 10) || 5;
         const targetOEE = parseInt(modal.querySelector('#cfgTargetOEE').value, 10) || 85;
 
-        // Tab 2: Budget
-        const currency = modal.querySelector('#cfgCurrency').value || 'USD';
-        const budgetAlertThreshold = parseInt(modal.querySelector('#cfgBudgetThreshold').value, 10) || 85;
-        const newBudgets = Object.assign({}, current.budgets);
-        modal.querySelectorAll('.cfg-month-budget').forEach(inp => {
-          const k = inp.getAttribute('data-key');
-          if (k) newBudgets[k] = parseFloat(inp.value) || 0;
-        });
+        // Moneda
+        const currencyEl = modal.querySelector('#cfgCurrency');
+        const currency = currencyEl ? currencyEl.value : (current.currency || 'USD');
 
-        // Tab 3: Seguridad
+        // Tab 2: Seguridad
         const newPass = modal.querySelector('#cfgMasterPass').value.trim();
         const masterPass = (newPass && newPass.length >= 4) ? newPass : current.masterPass;
         const inactivityMinutes = parseInt(modal.querySelector('#cfgInactivity').value, 10);
@@ -411,8 +378,6 @@
           critDays,
           targetOEE,
           currency,
-          budgetAlertThreshold,
-          budgets: newBudgets,
           masterPass,
           inactivityMinutes,
           customOperators: current.customOperators || []
@@ -535,24 +500,9 @@
     modal.querySelector('#cfgCritDays').value = cfg.critDays;
     modal.querySelector('#cfgTargetOEE').value = cfg.targetOEE;
 
-    // Tab 2
-    modal.querySelector('#cfgCurrency').value = cfg.currency || 'USD';
-    modal.querySelector('#cfgBudgetThreshold').value = cfg.budgetAlertThreshold || 85;
-
-    const budgetContainer = modal.querySelector('#cfgBudgetInputsContainer');
-    if (budgetContainer) {
-      const monthNames = {
-        '2026-01': 'Enero', '2026-02': 'Febrero', '2026-03': 'Marzo', '2026-04': 'Abril',
-        '2026-05': 'Mayo', '2026-06': 'Junio', '2026-07': 'Julio', '2026-08': 'Agosto',
-        '2026-09': 'Septiembre', '2026-10': 'Octubre', '2026-11': 'Noviembre', '2026-12': 'Diciembre'
-      };
-      budgetContainer.innerHTML = Object.keys(monthNames).map(k => `
-        <div style="display:flex; flex-direction:column; gap:3px;">
-          <span style="font-size:10px; color:var(--text-dim,#8B8990); font-family:var(--mono,monospace);">${monthNames[k]}</span>
-          <input type="number" class="settings-input cfg-month-budget" data-key="${k}" value="${(cfg.budgets && cfg.budgets[k]) || 7000}" step="500" />
-        </div>
-      `).join('');
-    }
+    // Moneda
+    const currencyEl = modal.querySelector('#cfgCurrency');
+    if (currencyEl) currencyEl.value = cfg.currency || 'USD';
 
     // Tab 3
     modal.querySelector('#cfgMasterPass').value = cfg.masterPass || 'master123';
